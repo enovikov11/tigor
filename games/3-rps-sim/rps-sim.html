@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rock Paper Scissors Simulator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { margin: 0; overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: none; }
+        .pauseBtn:hover { background: rgba(255,255,255,.2) !important; }
+    </style>
+</head>
+
+<body>
+    <div id="hud" style="position:fixed;top:8px;left:12px;font:14px monospace;background:rgba(0,0,0,.5);color:#fff;padding:4px 8px;border-radius:4px;pointer-events:none;"></div>
+    <div id="pauseBtn" class="pauseBtn" style="position:fixed;top:8px;right:12px;font:18px monospace;background:rgba(0,0,0,.5);color:#fff;padding:4px 8px;border-radius:4px;cursor:pointer;user-select:none;">(pause)</div>
+    <div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);color:#fff;align-items:center;justify-content:center;font-size:48px;flex-direction:column;z-index:3;gap:12px;">
+        <div id="overlayMsg" style="font-size:80px;"></div>
+        <button id="resetBtn" style="font-size:24px;padding:8px 24px;cursor:pointer;background:rgba(255,255,255,.1);border:2px solid #fff;border-radius:8px;color:#fff;">replay</button>
+        <button id="closeBtn" style="font-size:24px;cursor:pointer;background:rgba(255,255,255,.1);border:2px solid #aaa;border-radius:8px;color:#aaa;">✕</button>
+        <div id="replayHint" style="font-size:18px;opacity:.6;">replaying in 5s...</div>
+    </div>
+    <script>
+        function makeSpan() {
+            const span = document.createElement("span");
+            span.style.fontSize = "30px";
+            span.style.position = "absolute";
+            document.body.appendChild(span);
+            return span;
+        }
+
+        const count = 100;
+        let playing = true;
+        const items = ["🪨", "📄", "✂️"].map(item => {
+            const span = makeSpan();
+            span.innerText = item;
+            const { width, height } = span.getBoundingClientRect();
+            document.body.removeChild(span);
+            return { item, width, height };
+        });
+        const wins = [[0, 2], [1, 0], [2, 1]];
+        const margin = 30;
+        const itemW = items[0].width;
+        const itemH = items[0].height;
+        let boundsW = window.innerWidth - itemW;
+        let boundsH = window.innerHeight - itemH;
+
+        const vel = [];
+        const positions = [];
+        const placements = [];
+        const rect = new Array(count);
+        const vis = new Array(count).fill(false);
+        let tick, replayTimer;
+
+        function initTick(types) {
+            function handleBounce(w, h) {
+                for (let p = 0; p < count; p++) {
+                    if (!vis[p]) continue;
+                    let nx = positions[p][0] + vel[p].x;
+                    let ny = positions[p][1] + vel[p].y;
+                    if (nx < 0) { nx = 0; vel[p].x = 0.6 + Math.random() * 0.6; }
+                    if (nx > w) {
+                        nx = w; vel[p].x = -(0.6 + Math.random() * 0.6);
+                    }
+                    if (ny < 0) { ny = 0; vel[p].y = 0.6 + Math.random() * 0.6; }
+                    if (ny > h) {
+                        ny = h; vel[p].y = -(0.6 + Math.random() * 0.6);
+                    }
+                    positions[p][0] = nx;
+                    positions[p][1] = ny;
+                    placements[p].style.left = nx + 'px';
+                    placements[p].style.top = ny + 'px';
+                }
+            }
+
+            tick = function tickFrame() {
+                if (!playing) return;
+                handleBounce(boundsW, boundsH);
+                for (let i = 0; i < count; i++) {
+                    rect[i] = placements[i].getBoundingClientRect();
+                    vis[i] = placements[i].offsetParent !== null;
+                }
+                for (let i = 0; i < count; i++) {
+                    if (!vis[i]) continue;
+                    const a = rect[i];
+                    const wi = wins[types[i]][1];
+                    for (let j = i + 1; j < count; j++) {
+                        if (!vis[j]) continue;
+                        const b = rect[j];
+                        if (Math.abs(a.left - b.left) < margin && Math.abs(a.top - b.top) < margin) {
+                            const wj = wins[types[j]][1];
+                            if (wi === types[j]) placements[j].style.display = 'none';
+                            else if (wj === types[i]) placements[i].style.display = 'none';
+                        }
+                    }
+                }
+                let c=[0,0,0]; for(let i=0;i<count;i++) if(vis[i]) c[types[i]]++;
+                const hud = document.getElementById('hud');
+                hud.textContent=`🪨${c[0]} 📄${c[1]} ✂️${c[2]}`;
+                const alive=c.filter(x=>x>0);
+                if(alive.length!==1){requestAnimationFrame(tickFrame);return;}
+                hud.textContent=`Winner: ${['🪨','📄','✂️'][c.indexOf(alive[0])]}`;
+                const overlay = document.getElementById('overlay');
+                const overlayMsg = document.getElementById('overlayMsg');
+                const replayHint = document.getElementById('replayHint');
+                overlay.style.display = 'flex';
+                overlayMsg.textContent = ['🪨','📄','✂️'][c.indexOf(alive[0])];
+                replayHint.style.display = 'block';
+                clearTimeout(replayTimer);
+                let remaining = 5;
+                replayHint.textContent = `replaying in ${remaining}s...`;
+                replayTimer = setInterval(() => {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(replayTimer);
+                        document.dispatchEvent(new CustomEvent('autoReplay'));
+                    } else {
+                        replayHint.textContent = `replaying in ${remaining}s...`;
+                    }
+                }, 1000);
+            };
+        }
+
+        function resetGame() {
+            document.getElementById('hud').textContent = '';
+            for (let i = vis.length - 1; i >= 0; i--) vis[i] = false;
+            const types = Array.from({length: count}, () => Math.floor(Math.random() * 3));
+            vel.length = 0;
+            positions.length = 0;
+            placements.length = 0;
+
+            for (let i = 0; i < count; i++) {
+                const span = makeSpan();
+                const x = Math.random() * (window.innerWidth - itemW);
+                const y = Math.random() * (window.innerHeight - itemH);
+                positions.push([x, y]);
+                vel.push({
+                    x: (Math.random() - 0.5) * 1.2,
+                    y: (Math.random() - 0.5) * 1.2,
+                });
+                span.style.left = x + 'px';
+                span.style.top = y + 'px';
+                span.innerText = items[types[i]].item;
+                placements.push(span);
+            }
+
+            initTick(types);
+            requestAnimationFrame(tick);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && playing) requestAnimationFrame(tick);
+        });
+
+        const pauseBtnEl = document.getElementById('pauseBtn');
+        function toggle() {
+            playing = !playing;
+            pauseBtnEl.textContent = playing ? '(pause)' : '(play)';
+            if (playing) {
+                clearTimeout(replayTimer);
+                pauseBtnEl.style.background = 'rgba(0,0,0,.5)';
+                pauseBtnEl.style.color = '#fff';
+                requestAnimationFrame(tick);
+            } else {
+                pauseBtnEl.style.background = 'rgba(255,255,255,.15)';
+                pauseBtnEl.style.color = '#000';
+            }
+        }
+        pauseBtnEl.addEventListener('click', toggle);
+
+        function hideOverlay() {
+            clearTimeout(replayTimer);
+            playing = true;
+            pauseBtnEl.textContent = '(pause)';
+            const o = document.getElementById('overlay');
+            o.style.display = 'none';
+            document.getElementById('overlayMsg').textContent = '';
+            document.getElementById('replayHint').style.display = 'none';
+            resetGame();
+        }
+
+        document.addEventListener('keydown', e => {
+            const o = document.getElementById('overlay');
+            if (o.style.display === 'flex' && e.code === 'Escape') {
+                e.preventDefault();
+                hideOverlay();
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                toggle();
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            hideOverlay();
+        });
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            hideOverlay();
+        });
+        document.addEventListener('autoReplay', () => {
+            clearTimeout(replayTimer);
+            if (playing) resetGame();
+        });
+
+        window.addEventListener('resize', () => {
+            boundsW = window.innerWidth - itemW;
+            boundsH = window.innerHeight - itemH;
+            for (let p = 0; p < count; p++) {
+                if (!vis[p]) continue;
+                let [cx, cy] = positions[p];
+                const clamped = [];
+                cx = Math.min(cx, Math.max(0, boundsW));
+                cy = Math.min(cy, Math.max(0, boundsH));
+                if (cx <= 0) clamped.push('left');
+                if (cx >= boundsW) clamped.push('right');
+                if (cy <= 0) clamped.push('top');
+                if (cy >= boundsH) clamped.push('bottom');
+                if (clamped.length > 0) {
+                    if (clamped.includes('left') || clamped.includes('right')) vel[p].x = -(0.6 + Math.random() * 0.6);
+                    if (clamped.includes('top') || clamped.includes('bottom')) vel[p].y = (0.6 + Math.random() * 0.6);
+                }
+                positions[p] = [cx, cy];
+                placements[p].style.left = cx + 'px';
+                placements[p].style.top = cy + 'px';
+            }
+        });
+
+        resetGame();
+    </script>
+</body>
+
+</html>

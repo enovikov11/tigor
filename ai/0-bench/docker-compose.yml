@@ -1,0 +1,128 @@
+services:
+  # --- vLLM (disabled — Qwen3_5MoeForCausalLM arch unsupported in nightly, VL-renderer routing bug) ---
+  # p-vllm:
+  #   image: docker.io/vllm/vllm-openai:nightly
+  #   container_name: bench-vllm
+  #   restart: unless-stopped
+  #   # Previous model: Qwen/Qwen3.6-35B-A3B-FP8
+  #   # command: >-
+  #   #   /huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8
+  #   #   --served-model-name qwen3.6-35b
+  #   #   --host 0.0.0.0
+  #   #   --port 8000
+  #   #   --max-model-len 131072
+  #   #   --gpu-memory-utilization 0.90
+  #   #   --kv-cache-dtype fp8
+  #   #   --optimization-level 3
+  #   #   --performance-mode interactivity
+  #   #   --reasoning-parser qwen3
+  #   #   --enable-auto-tool-choice
+  #   #   --tool-call-parser qwen3_coder
+  #   #   --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":2}'
+  #   command: >-
+  #     /huggingface.co/AlexWortega/SIQ-1-35B
+  #     --served-model-name siq-1-35b
+  #     --host 0.0.0.0
+  #     --port 8000
+  #     --max-model-len 131072
+  #     --gpu-memory-utilization 0.90
+  #     --kv-cache-dtype fp8
+  #     --optimization-level 3
+  #     --performance-mode interactivity
+  #     --reasoning-parser qwen3
+  #     --enable-auto-tool-choice
+  #     --tool-call-parser qwen3_coder
+  #   devices:
+  #     - nvidia.com/gpu=all
+  #   environment:
+  #     NVIDIA_VISIBLE_DEVICES: all
+  #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  #     PYTORCH_ALLOC_CONF: expandable_segments:True
+  #     VLLM_USE_DEEP_GEMM: "0"
+  #   volumes:
+  #     - /ssd/internet/huggingface.co:/huggingface.co:ro
+  #   shm_size: 16g
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   networks: [bench-internal]
+
+  # --- sglang (disabled — Qwen3_5MoeForCausalLM has no SGLang implementation in 0.5.13) ---
+  # p-sglang:
+  #   image: docker.io/lmsysorg/sglang:latest
+  #   container_name: bench-vllm
+  #   restart: unless-stopped
+  #   command: >-
+  #     python3 -m sglang.launch_server
+  #     --model-path /huggingface.co/AlexWortega/SIQ-1-35B
+  #     --served-model-name siq-1-35b
+  #     --host 0.0.0.0
+  #     --port 8000
+  #     --context-length 131072
+  #     --reasoning-parser qwen3
+  #     --tool-call-parser qwen3_coder
+  #   devices:
+  #     - nvidia.com/gpu=all
+  #   environment:
+  #     NVIDIA_VISIBLE_DEVICES: all
+  #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  #   volumes:
+  #     - /ssd/internet/huggingface.co:/huggingface.co:ro
+  #   shm_size: 16g
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   networks: [bench-internal]
+
+  p-llamacpp:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: bench-vllm
+    restart: unless-stopped
+    command: >-
+      -m /huggingface.co/AlexWortega/SIQ-1-35B/gguf/SIQ-1-35B.Q4_K_M.gguf
+      --alias siq-1-35b
+      -ngl 99
+      -c 131072
+      -np 1
+      --jinja
+      --host 0.0.0.0
+      --port 8000
+    devices:
+      - nvidia.com/gpu=all
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - /ssd/internet/huggingface.co:/huggingface.co:ro
+    shm_size: 16g
+    security_opt:
+      - no-new-privileges:true
+    networks: [bench-internal]
+
+  p-opencode:
+    build:
+      context: ./opencode
+      dockerfile: Dockerfile
+    image: bench-opencode:local
+    container_name: bench-opencode
+    restart: unless-stopped
+    depends_on: [p-llamacpp]
+    working_dir: /monorepo-rw
+    volumes:
+      # Canonical monorepo, read-only — agent reads AGENTS.md + docs here.
+      - ~/monorepo:/monorepo-ro:ro
+      # Read-write working copy — all edits and commits happen here.
+      - ~/monorepo-loop:/monorepo-rw
+      # Loop state persists across iterations (slot table, driver log).
+      - ~/loop-state:/loop-state
+    environment:
+      HOME: /root
+      GIT_AUTHOR_NAME: opencode-bench
+      GIT_AUTHOR_EMAIL: opencode-bench@localhost
+      GIT_COMMITTER_NAME: opencode-bench
+      GIT_COMMITTER_EMAIL: opencode-bench@localhost
+    security_opt:
+      - no-new-privileges:true
+    networks: [bench-internal]
+
+networks:
+  bench-internal:
+    internal: true
