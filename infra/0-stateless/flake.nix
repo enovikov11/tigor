@@ -276,8 +276,10 @@
                   firewall.enable = false;
                   nftables.enable = true;
                   networkmanager.enable = true;
-                  interfaces.${netInterface}.useDHCP = lib.mkIf staticIP false;
-                  interfaces.${netInterface}.ipv4.addresses = lib.mkIf staticIP [ staticIP ];
+                  interfaces.${netInterface} = {
+                    useDHCP = lib.mkIf staticIP false;
+                    ipv4.addresses = lib.mkIf staticIP [ staticIP ];
+                  };
                   routes = lib.mkIf staticIPGateway [
                     {
                       destination = staticIPGateway;
