@@ -6,4 +6,4 @@ tiktoken==0.5.1
 faiss-cpu==1.7.4
 tqdm==4.66.3
 lmdb==1.4.1
-yt_dlp==2023.9.24
+yt_dlp==2026.7.4
