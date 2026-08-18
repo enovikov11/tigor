@@ -35,7 +35,11 @@
         </xsl:choose>
       </os>
       <features><acpi/><apic/><ioapic driver="kvm"/><smm state="off"/><vmport state="off"/></features>
-      <cpu mode="host-passthrough" check="none" migratable="off"/>
+      <cpu mode="host-passthrough" check="none" migratable="off">
+        <xsl:if test="@nested != 'true'">
+          <feature policy="disable" name="svm"/>
+        </xsl:if>
+      </cpu>
       <clock offset="utc"/>
       <devices>
         <emulator>/run/libvirt/nix-emulators/qemu-system-x86_64</emulator>
