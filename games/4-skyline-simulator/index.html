@@ -1,131 +1,158 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8" />
     <style>
-        .animated {
-            transition: transform 0.2s linear;
-        }
-
-        svg {
-            user-select: none;
-            background-color: #eeeeee;
-        }
+        body { margin: 0; display: flex; background: #0d1117; font: 11px/1.4 monospace; }
+        #bar { width: 180px; padding: 8px; color: #8b949e; }
+        #bar h3 { margin: 6px 0 2px; color: #58a6ff; }
+        #bar b { color: #c9d1d9; }
+        button { background: #238636; color: #fff; border: none; padding: 3px 8px; cursor: pointer; border-radius: 3px; margin: 1px; }
+        button.stop { background: #da3633; }
     </style>
 </head>
-
-<body style="margin: 0;">
-    <svg width="620" height="700" xmlns="http://www.w3.org/2000/svg"></svg>
+<body>
+    <div id="bar">
+        <button onclick="go()">▶</button>
+        <button class="stop" onclick="halt()">⏹</button>
+        <button onclick="go(1)">↺</button>
+        <h3>Stats</h3>
+        <div id="st"></div>
+    </div>
+    <svg id="svg" width="560" height="690" xmlns="http://www.w3.org/2000/svg"></svg>
     <script>
-        const ELEVATORS = "ABCDEFGH", FLOORS = 31, FLOOR_SIZE_PX = 20, ELEVATOR_STEP_PX = 70;
-        let elevators, people;
+    const NF = 31, FH = 20, CAP = 6, SPAWN = 12;
+    const PY = f => 50 + f * FH;
+    const NW = 8; // number of elevators
 
-        function render() {
+    let elvs, ps, run, T, spN, ok, tW;
 
-            let html = [];
+    function setup() {
+        let h = [];
+        for (let i = 0; i <= NF; i++)
+            h.push(`<line x1="0" y1="${PY(i)}" x2="560" y2="${PY(i)}" stroke="#21262d"/>`);
+        for (let i = 0; i <= NF; i++)
+            h.push(`<text x="552" y="${PY(i)+1}" font-size="9" fill="#484f58" text-anchor="end">${NF-i}</text>`);
+        for (let i = 0; i < NW; i++) {
+            const x = 25 + 62*i;
+            h.push(`<rect x="${x}" y="38" width="26" height="645" fill="#161b22" rx="2"/>`);
+            h.push(`<text x="${x+13}" y="36" font-size="10" fill="#58a6ff" text-anchor="middle">${"ABCDEFGH"[i]}</text>`);
+            h.push(`<rect id="e${i}" x="${x+2}" y="${PY(0)}" width="22" height="12" rx="2"/>`);
+        }
+        for (let i = 0; i < 120; i++)
+            h.push(`<circle id="p${i}" r="3.5" opacity="0"/>`);
+        document.getElementById("svg").innerHTML = h.join("");
 
-            // Elevator letters
-            for (let i = 0; i < ELEVATORS.length; i++) {
-                const x = 50 + 70 * i, letter = ELEVATORS[i];
-                html.push(`<text x="${x}" y="40" font-size="40" fill="black" font-weight="bold">${letter}</text>`);
-            }
+        elvs = Array.from({length: NW}, (_, i) => ({
+            r: document.getElementById(`e${i}`), f: 0, on: []
+        }));
+        ps = Array.from({length: 120}, (_, i) => ({
+            r: document.getElementById(`p${i}`), s: 0, fr: 0, to: 0, e: -1, t0: 0
+        }));
+        T = 0; ok = 0; tW = 0; spN = 0;
+    }
 
-            // Floor numbers
-            for (let i = 0; i <= FLOORS; i++) {
-                html.push(`<text x="${16 <= i && i <= 30 ? 300 : 590}" y="${70 + FLOOR_SIZE_PX * i}" font-size="${FLOOR_SIZE_PX}" fill="black" font-weight="bold">${FLOORS - i}</text>`);
-            }
+    /* SOLVER */
+    function solve(fr, to) {
+        let best = -1, bc = 1e9;
+        for (let i = 0; i < NW; i++) {
+            const e = elvs[i];
+            if (e.on.length >= CAP) continue;
+            let c = Math.abs(e.f - fr) * 10 + e.on.length * 5;
+            for (const p of e.on)
+                if ((p.to - p.fr) * (to - fr) > 0) c -= 8;
+            if (c < bc) { bc = c; best = i; }
+        }
+        return best;
+    }
 
-            // Floor separators
-            for (let i = 0; i <= FLOORS + 1; i++) {
-                const y = 53 + FLOOR_SIZE_PX * i, keepHigh = i <= 16 || i >= 31;
-                const parts = [[0, 285], keepHigh && [285, 700]].filter(Boolean);
+    function spawn() {
+        for (const p of ps) {
+            if (p.s !== 1) continue;
+            const i = solve(p.fr, p.to);
+            if (i >= 0) { p.e = i; p.s = 2; }
+        }
+        const idle = ps.filter(p => p.s === 0);
+        if (!idle.length) return;
+        const p = idle[Math.random()*idle.length|0];
+        let fr, to;
+        do { fr = Math.random()*NF|0; to = Math.random()*NF|0; } while (fr === to);
+        p.fr = fr; p.to = to; p.s = 1; p.e = -1; p.t0 = T;
+    }
 
-                for (let [start, end] of parts) {
-                    html.push(`<line x1="${start}" y1="${y}" x2="${end}" y2="${y}" stroke="gray" stroke-width="1" />`);
+    function step() {
+        for (let i = 0; i < NW; i++) {
+            const e = elvs[i];
+            const cf = Math.round(e.f);
+
+            // Alight at destination
+            e.on = e.on.filter(p => {
+                if (p.to === cf) { p.s = 0; ok++; tW += T - p.t0; return false; }
+                return true;
+            });
+
+            // Board waiting passengers for this elevator
+            for (const p of ps) {
+                if (p.s === 2 && p.e === i && p.fr === cf && e.on.length < CAP) {
+                    if (p.to === cf) { p.s = 0; ok++; tW += T - p.t0; }
+                    else { p.s = 3; e.on.push(p); }
                 }
             }
 
-            // Elevator shafts
-            for (let i = 0; i < ELEVATORS.length * 2; i++) {
-                const x = 40 + ELEVATOR_STEP_PX / 2 * i + (i % 2 == 0 ? 15 : 0);
-                html.push(`<line x1="${x}" y1="${i >= 8 ? 53 : 313}" x2="${x}" y2="693" stroke="gray" stroke-width="1" stroke-dasharray="5,5" />`);
-            }
+            // Nearest target
+            let targets = e.on.map(p => p.to);
+            for (const p of ps) if (p.s === 2 && p.e === i) targets.push(p.fr);
+            if (!targets.length) continue;
+            let nt = targets[0], nd = Math.abs(targets[0] - e.f);
+            for (const t of targets) { const d = Math.abs(t - e.f); if (d < nd) { nd = d; nt = t; } }
 
-            // Elevators
-            for (let i = 0; i < ELEVATORS.length; i++) {
-                const x = 55 + ELEVATOR_STEP_PX * i;
-                html.push(`<rect x="${x}" y="674" width="20" height="18" fill="gray" stroke="black" stroke-width="2" class="elevator animated" />`);
-            }
-
-            // People
-            for (let i = 0; i < 100; i++) {
-                html.push(`<circle cx="-10" cy="685" r="7" stroke="black" stroke-width="1" fill="white" class="person animated" />`);
-            }
-
-            document.querySelector("svg").innerHTML = html.filter(Boolean).join("\n");
-
-            elevators = Array.from(document.querySelectorAll('.elevator')).map(element => ({
-                element,
-                floor: 0,
-                wait: 0,
-                order: null
-            }));
-
-            people = Array.from(document.querySelectorAll('.person')).map(element => ({
-                element,
-                hidden: true,
-                floor: 0,
-                position: 0,
-                ridingFrom: null,
-                ridingTo: null,
-                isRiding: false
-            }));
+            if (nt > cf) e.f = Math.min(cf + 0.35, nt);
+            else if (nt < cf) e.f = Math.max(cf - 0.35, nt);
         }
+    }
 
-        function orderStop(elevatorId, floor, wait = 3) {
-            if (!elevators[elevatorId].order) {
-                elevators[elevatorId].order = { floor, wait, next: null };
-                return;
-            }
-
-            let next = elevators[elevatorId].order;
-            while (next.next) next = next.next;
-
-            next.next = { floor, wait, next: null };
+    function draw() {
+        for (let i = 0; i < NW; i++) {
+            const e = elvs[i];
+            e.r.setAttribute("y", PY(e.f));
+            e.r.setAttribute("fill", e.on.length ? "#d29922" : "#238636");
         }
-
-        function order(personId, elevatorId, from, to) {
-            people[personId].ridingFrom = from;
-            people[personId].ridingTo = to;
-
-        }
-
-        render();
-
-        setInterval(() => {
-            for (let elevator of elevators) {
-                if (!elevator.order) continue;
-
-                if (elevator.wait > 0) {
-                    elevator.wait--;
-                    continue;
-                }
-
-                if (elevator.order.floor == elevator.floor) {
-                    elevator.wait = elevator.order.wait;
-                    elevator.order = elevator.order.next;
-
-                    if (elevator.wait > 0) continue;
-                }
-
-                elevator.floor += elevator.order.floor > elevator.floor ? 0.5 : -0.5;
-
-                elevator.element.style.transform = `translateY(-${20 * elevator.floor}px)`
+        for (const p of ps) {
+            if (!p.s) { p.r.setAttribute("opacity", 0); continue; }
+            p.r.setAttribute("opacity", 1);
+            if (p.s <= 2) {
+                p.r.setAttribute("cx", 450 + (p.fr % 12) * 8);
+                p.r.setAttribute("cy", PY(p.fr));
+                p.r.setAttribute("fill", p.s === 1 ? "#f85149" : "#d29922");
+            } else {
+                p.r.setAttribute("cx", 25 + 62 * p.e + 11);
+                p.r.setAttribute("cy", PY(elvs[p.e].f) + 6);
+                p.r.setAttribute("fill", "#58a6ff");
             }
+        }
+        if (T % 10 === 0) {
+            const a = ps.filter(p => p.s).length;
+            document.getElementById("st").innerHTML =
+                `Served: <b>${ok}</b><br>` +
+                `Avg wait: <b>${ok?Math.round(tW/ok/5*100)/10+'s':'–'}</b><br>` +
+                `Active: <b>${a}</b><br>` +
+                `Tick: <b>${T}</b>`;
+        }
+    }
 
-        }, 200);
+    let iv;
+    function go(r) {
+        if (r) { halt(); setup(); }
+        if (run) return;
+        run = 1;
+        iv = setInterval(() => {
+            if (T >= spN) { spawn(); spN = T + SPAWN; }
+            step(); draw(); T++;
+        }, 20);
+    }
+    function halt() { run = 0; clearInterval(iv); }
+
+    setup();
     </script>
 </body>
-
 </html>
