@@ -2,24 +2,31 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
     <style>
-        body { margin: 0; display: flex; background: #0d1117; font: 11px/1.4 monospace; }
-        #bar { width: 180px; padding: 8px; color: #8b949e; }
-        #bar h3 { margin: 6px 0 2px; color: #58a6ff; }
-        #bar b { color: #c9d1d9; }
-        button { background: #238636; color: #fff; border: none; padding: 3px 8px; cursor: pointer; border-radius: 3px; margin: 1px; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; display: flex; flex-wrap: wrap; background: #0d1117; font: 12px/1.4 monospace; }
+        #bar { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 8px; color: #8b949e; }
+        #bar h3 { margin: 0 0 0 auto; color: #58a6ff; font-size: 12px; }
+        #st { padding: 0 8px 6px; width: 100%; }
+        #st b { color: #c9d1d9; }
+        button { background: #238636; color: #fff; border: none; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-size: 14px; touch-action: manipulation; }
         button.stop { background: #da3633; }
+        #svgwrap { width: 100%; max-width: 560px; margin: 0 auto; }
+        #svgwrap svg { width: 100%; height: auto; display: block; }
     </style>
 </head>
 <body>
     <div id="bar">
-        <button onclick="go()">▶</button>
-        <button class="stop" onclick="halt()">⏹</button>
-        <button onclick="go(1)">↺</button>
+        <button onclick="go()">▶ Start</button>
+        <button class="stop" onclick="halt()">⏹ Stop</button>
+        <button onclick="go(1)">↺ Reset</button>
         <h3>Stats</h3>
-        <div id="st"></div>
     </div>
-    <svg id="svg" width="560" height="690" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="st"></div>
+    <div id="svgwrap">
+        <svg id="svg" viewBox="0 0 560 690" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
     <script>
     const NF = 31, FH = 20, CAP = 6, SPAWN = 12;
     const PY = f => 50 + f * FH;
