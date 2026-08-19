@@ -19,7 +19,8 @@
       "hex20+A!": hex => hex.substr(0, 20) + "A!",
       hex20: hex => hex.substr(0, 20),
       pin4: hex => (encodeModulus(hex, 10 ** 4) + 10 ** 4 + "").substr(1),
-      pin8: hex => (encodeModulus(hex, 10 ** 8) + 10 ** 8 + "").substr(1)
+      pin8: hex => (encodeModulus(hex, 10 ** 8) + 10 ** 8 + "").substr(1),
+      "pin15+aA": hex => (encodeModulus(hex, 10 ** 15) + 10 ** 15 + "").substr(1) + "aA",
     };
 
     const seed = document.querySelector("#seed"), account = document.querySelector("#account"),
