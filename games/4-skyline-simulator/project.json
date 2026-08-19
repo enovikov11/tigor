@@ -1,1 +1,1 @@
-{"use": "dead", "stage": "draft", "description": "Elevator sim for 31-floor building, scheduling logic incomplete"}
+{"use": "active", "stage": "alpha", "description": "Elevator simulator for 31-floor building with 8 elevators, cost-based solver, and live SVG rendering"}
