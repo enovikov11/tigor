@@ -6,6 +6,13 @@
 
 See also https://github.com/enovikov11/tigor-no-ai
 
+## Highly Notable
+
+| Project | Why |
+|---------|-----|
+| `specs/tigorc` | Self-compiling markdown → code via local LLM — deterministic compiler prototype |
+| `infra/0-macbook` | Authoritative MacBook setup reference (moved to [tigor-no-ai](https://github.com/enovikov11/tigor-no-ai)) |
+
 ## Legend
 - **#** — highly notable (coolness ≥ 8)
 - **!** — interesting but incomplete (coolness ≥ 6, < 50%)
@@ -46,7 +53,7 @@ See also https://github.com/enovikov11/tigor-no-ai
 |   | `3-wolt-lowcarb` | Browser JS skeleton for Wolt API data extraction | 10% | 4/10 |
 |   | `3-word-vectors` | GloVe word embedding analogy explorer | 60% | 7/10 |
 
-## 🏗️ Infrastructure (4 projects)
+## 🏗️ Infrastructure (3 projects)
 
 > `infra/0-stateless` moved to [tigor-no-ai](https://github.com/enovikov11/tigor-no-ai)
 
@@ -54,11 +61,10 @@ See also https://github.com/enovikov11/tigor-no-ai
 |---|---------|-------------|------|------|
 | # | `0-box` | NixOS home AI workstation: vLLM + Podman, GPU passthrough, ZFS, UKI | 85% | 9/10 |
 |   | `0-hermes` | Provision DigitalOcean droplet with Hermes Agent + Telegram | 90% | 6/10 |
-|   | `0-macbook` | MacBook setup reference: Homebrew, GPG/YubiKey, VS Code | 100% | 3/10 |
 |   | `0-tgr` | VPS: Caddy, MariaDB, 3 TG bots, WireGuard VPN hub | 90% | 5/10 |
 |   | `1-utils` | Toolbox: CI checks, hashing, GitHub sync, Chia, C++ deduplicator | 70% | 5/10 |
 
-## 🎮 Games (19 projects)
+## 🎮 Games (14 projects)
 
 | # | Project | Description | Done | Cool |
 |---|---------|-------------|------|------|
@@ -66,18 +72,13 @@ See also https://github.com/enovikov11/tigor-no-ai
 |   | `0-spherium` | Sphere physics demo | TBD | TBD |
 |   | `0-tess-tac-toe.github.io` | Tic-Tac-Toe on GitHub Pages | 100% | 3/10 |
 |   | `2-mousemove` | Mouse movement visualizer | TBD | TBD |
-|   | `3-hanoi` | Tower of Hanoi | TBD | TBD |
 |   | `3-rcon-maze` | RCON maze game | TBD | TBD |
 |   | `3-rps-sim` | Browser physics: 🪨📄✂️ elimination | 100% | 6/10 |
 |   | `3-world-generator` | Procedural world/terrain generation | 70% | 5/10 |
 |   | `4-art-fractals` | Fractal art generator | TBD | TBD |
 |   | `4-cluster-plot` | Cluster plot visualization | 100% | 4/10 |
 |   | `4-codeworld` | Educational coding world | 100% | 4/10 |
-|   | `4-cpp-simple-chess` | Chess in C++ | TBD | TBD |
 |   | `4-morse` | Morse code tool | TBD | TBD |
-|   | `4-nyan` | Nyan Cat clone | TBD | TBD |
-|   | `4-periodic` | Periodic table | TBD | TBD |
-|   | `4-py-simple-chess` | Chess in Python | TBD | TBD |
 |   | `4-qr-snake` | QR Snake game | TBD | TBD |
 |   | `4-random-point` | Random point generator | TBD | TBD |
 |   | `4-skyline-simulator` | Skyline simulation | TBD | TBD |
@@ -100,17 +101,15 @@ See also https://github.com/enovikov11/tigor-no-ai
 |   | `3-palladium` | Palladium project (android, arduino, server) | TBD | TBD |
 |   | `4-arduino-bluetooth` | Arduino Bluetooth projects | TBD | TBD |
 
-## 🔒 Security (7 projects)
+## 🔒 Security (5 projects)
 
 | # | Project | Description | Done | Cool |
 |---|---------|-------------|------|------|
 |   | `0-libreboot` | Libreboot firmware research | TBD | TBD |
 |   | `0-xkpass` | XKCD password manager | TBD | TBD |
 |   | `2-bmc` | BMC management tools | TBD | TBD |
-|   | `2-password` | Password utilities | TBD | TBD |
-|   | `2-password-web` | Web password tools | TBD | TBD |
+|   | `2-password` | Password utilities (SHA3, formats) | TBD | TBD |
 |   | `2-poco-aes` | POCO AES implementation | TBD | TBD |
-|   | `2-sev-es` | AMD SEV-ES secure encrypted virtualization | TBD | TBD |
 |   | `4-zerotrust` | Zero trust security architecture | 100% | 5/10 |
 
 ## 💬 Telegram Bots (10 projects)
