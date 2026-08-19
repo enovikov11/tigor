@@ -1,5 +1,1 @@
-<div id="d"></div>
-<script>
-    i = "innerHTML";
-    b = document.body;
-</script>
+<canvas id=c><script>c.width=c.height=200;x=c.getContext("2d");b=[{x:3,y:3}];d=[1,0];f=[5,5];setInterval(()=>{for(i=b.length-1;i;i--)b[i]={x:b[i-1].x,y:b[i-1].y};b[0].x=(b[0].x+d[0])%20;b[0].y=(b[0].y+d[1])%20;if(b[0].x==f[0]&&b[0].y==f[1]){b.push({});f=[~~Math.random()*20,~~Math.random()*20]}else b.pop()if(b.some((p,i)=>i&&p.x==b[0].x&&p.y==b[0].y))b=[{x:3,y:3}];x.fillStyle=0;x.fillRect(0,0,200,200);x.fillStyle="0f0";for(p of b)x.fillRect(p.x*10,p.y*10,10,10);x.fillStyle="f00";x.fillRect(f[0]*10,f[1]*10,10,10)},120);onkeydown=e=>{k=e.keyCode-38;if(k>=0&&k<=3&&d[k%2]!=2-k)d[k%2]=2-k};</script>
