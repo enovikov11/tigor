@@ -15,3 +15,4 @@ https://huggingface.co/MiniMaxAI/MiniMax-H3/tree/main/Ref2VA
 https://huggingface.co/unsloth/GLM-5.2-GGUF
 https://huggingface.co/unsloth/MiniMax-M3-GGUF
 https://huggingface.co/unsloth/DeepSeek-V4-Flash
+
