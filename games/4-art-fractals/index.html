@@ -1,69 +1,135 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <!-- Copyright (c) 2026 Evgenii Novikov  -->
+    <!-- Copyright (c) 2026 Evgenii Novikov -->
+    <meta charset="UTF-8">
+    <title>Art Fractals</title>
+    <script>p5.disableFriendlyErrors=true;</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+    <style>html,body{margin:0;padding:0;overflow:hidden;background:#000}canvas{display:block}</style>
 </head>
-
 <body>
-    <svg id="svg" width="600" height="600" xmlns="http://www.w3.org/2000/svg">
-        <rect width="600" height="600" fill="black" />
-    </svg>
-    <script>
-        const STEPS = 4, SPEED = 0.001, MUL = 0.1;
+<script>
+const DEPTH=5, BR=3, BA=atan2(84,-187), NS=0.0015;
+const PAL=[
+  color(260,80,95),color(290,85,90),color(320,75,85),color(340,80,95),
+  color(200,80,95),color(180,85,90),color(50,70,95),color(350,75,90)
+];
+let nodes=[];
+let t;
+let seed;
 
-        function getObjectsState() {
-            let total = [], line = [{ cx: 300, cy: 300, r: 280, b: 3, a: 0, ca: 1 }], nextLine = [], currentTime = Date.now();
+function fbm(x,y,o){
+  let v=0,a=1,f=1,s=0;
+  for(let i=0;i<o;i++){
+    v+=(sin(x*f+t*0.01+i*1.3)*cos(y*f+t*0.007+i*2.7)+1)*0.5*a;
+    s+=a;a*=0.5;f*=2.1;
+  }
+  return v/s;
+}
 
-            for (let i = 0; i < STEPS; i++) {
-                for (let {cx, cy, r, b, a, ca} of line) {
-                    let nBase = (a + currentTime * SPEED) * MUL;
-                    let na = nBase;
-                    nextLine.push({cx: cx + Math.sin(na) * r * 0.3, cy: cy + Math.cos(na) * r * 0.3, r: r * 0.7, b, a: na, ca: ca * MUL});
+function build(){
+  nodes=[];
+  let cx=width/2+(mouseX-width/2)*0.15;
+  let cy=height/2+(mouseY-height/2)*0.15;
+  let r0=min(width,height)*0.32+sin(t*0.0003)*25;
+  let line=[{x:cx,y:cy,r:r0,d:0,s:0}];
+  for(let d=0;d<DEPTH;d++){
+    let nxt=[];
+    for(let n of line){
+      nodes.push(n);
+      let ba=t*0.0004+n.s;
+      for(let b=0;b<br;b++){
+        let wx=fbm(n.x*NS+1.7,n.y*NS+1.7,3);
+        let wy=fbm(n.x*NS+3.1,n.y*NS+3.1,3);
+        let warp=atan2(wy-0.5,wx-0.5)*0.3;
+        let a=ba+b*BA+warp+sin(t*0.001+d*0.5)*0.2;
+        let cr=d==0?n.r*0.7:n.r*(84/289)*2.5;
+        let dist=n.r*(d==0?0.35:(1-84/289));
+        let nx=n.x+sin(a)*dist, ny=n.y+cos(a)*dist;
+        let nr=cr*(0.8+fbm(nx*0.003,ny*0.003,2)*0.4);
+        nxt.push({x:nx,y:ny,r:nr,d:d+1,s:n.s+b*1.37+d*0.73});
+      }
+    }
+    line=nxt;
+  }
+  nodes.push(...line);
+}
 
-                    na = nBase + Math.atan2(84, -187);
-                    nextLine.push({cx: cx + Math.sin(na) * r * (1 - 84 / 289), cy: cy + Math.cos(na) * r * (1 - 84 / 289), r: r * 84 / 289, b, a: na, ca: ca * MUL});
+function setup(){
+  createCanvas(windowWidth,windowHeight,P2D);
+  colorMode(HSB,360,100,100,100);
+  pixelDensity(1);
+  seed=floor(random(99999));
+  randomSeed(seed);noiseSeed(seed);
+  t=millis();
+  background(5,80,5);
+}
 
-                    na = nBase - Math.atan2(84, -187)
-                    nextLine.push({cx: cx + Math.sin(na) * r * (1 - 84 / 289), cy: cy + Math.cos(na) * r * (1 - 84 / 289), r: r * 84 / 289, b, a: na, ca: ca * MUL});
-                }
+function draw(){
+  t=millis();
+  // Trail fade
+  blendMode(BLEND);
+  noStroke();fill(5,80,5,8);
+  rect(0,0,width,height);
+  build();
 
-                total.push(...line);
-                line = nextLine;
-                nextLine = [];
-            }
+  // Glow layers (ADD)
+  blendMode(ADD);
+  for(let n of nodes){
+    if(n.r<3)continue;
+    let c=PAL[n.d%PAL.length];
+    let a=map(n.d,0,DEPTH,30,8);
+    for(let g=3;g>0;g--){
+      let ga=a*0.08*g;
+      noStroke();
+      fill(red(c),green(c),blue(c),ga);
+      ellipse(n.x,n.y,n.r*2+g*8,n.r*2+g*8);
+    }
+  }
 
-            total.push(...line, ...nextLine);
-            
-            return total;
-        }
+  // Rings
+  for(let n of sorted(nodes,(a,b)=>b.d-a.d)){
+    let c=PAL[n.d%PAL.length];
+    let hs=sin(t*0.0005+n.s)*30;
+    let h=(hue(c)+hs+360)%360;
+    let sw=max(1,4-n.d);
+    let a=map(n.d,0,DEPTH,80,25);
+    let r=max(1,n.r);
+    noFill();
+    stroke(h,green(c),blue(c),a);
+    strokeWeight(sw);
+    ellipse(n.x,n.y,r*2,r*2);
+  }
 
-        function animate() {
-            const state = getObjectsState();
+  // Tip dots (ADD)
+  blendMode(ADD);
+  for(let n of nodes){
+    if(n.d<DEPTH-1)continue;
+    let c=PAL[n.d%PAL.length];
+    let dr=3;
+    let a=40+sin(t*0.002+n.s)*20;
+    noStroke();
+    fill(red(c),green(c),100,a);
+    ellipse(n.x,n.y,dr,dr);
+  }
+  blendMode(BLEND);
+}
 
-            for (let i = 0; i < count; i++) {
-                circles[i].setAttribute('cx', state[i].cx);
-                circles[i].setAttribute('cy', state[i].cy);
-                circles[i].setAttribute('r', state[i].r);
-                circles[i].setAttribute('stroke-width', state[i].b);
-            }
+function sorted(arr,f){return[...arr].sort(f)}
 
-            requestAnimationFrame(animate);
-        }
-
-        let svg = document.getElementById('svg'), circles = [], count = getObjectsState().length;
-
-        for (let i = 0; i < count; i++) {
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('fill', 'none');
-            circle.setAttribute('stroke', 'white');
-
-            svg.appendChild(circle);
-            circles.push(circle);
-        }
-
-        requestAnimationFrame(animate);
-    </script>
+function keyPressed(){
+  if(key==='s')saveCanvas('fractals','png');
+  if(key==='r'){seed=floor(random(99999));randomSeed(seed);noiseSeed(seed);background(5,80,5);}
+  if(key==='+')CFG={};
+  if(key==='1')DEPTH=3;
+  if(key==='2')DEPTH=4;
+  if(key==='3')DEPTH=5;
+  if(key==='4')DEPTH=6;
+  if(key==='5')DEPTH=7;
+  if(key===' ')loop()?noLoop():loop();
+}
+function windowResized(){resizeCanvas(windowWidth,windowHeight);background(5,80,5);}
+</script>
 </body>
-
 </html>
