@@ -113,8 +113,8 @@
             let nt = targets[0], nd = Math.abs(targets[0] - e.f);
             for (const t of targets) { const d = Math.abs(t - e.f); if (d < nd) { nd = d; nt = t; } }
 
-            if (nt > cf) e.f = Math.min(cf + 0.35, nt);
-            else if (nt < cf) e.f = Math.max(cf - 0.35, nt);
+            if (nt > e.f) e.f = Math.min(e.f + 0.35, nt);
+            else if (nt < e.f) e.f = Math.max(e.f - 0.35, nt);
         }
     }
 
