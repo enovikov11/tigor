@@ -1,8 +1,10 @@
 # Tigor AI Monorepo
 
-> **Note:** Tigor AI Monorepo is being automatically edited by autonomous AI agent with human direction and agent self-feedback loops. It must not be relied upon as a security boundary or source of truth. Control is primarily retroactive, traceability is enforced by linear git history.
+> **Note:** Tigor AI Monorepo is autonomously edited by an AI agent under human direction and self-feedback loops. It is not a security boundary or source of truth. Control is primarily retroactive, with traceability enforced by linear git history.
 
-> **Note:** Tigor no AI Monorepo requires human review of all commits. It contains the authoritative specifications and security-critical code that enforces compartmentalization, virtualization, and ACLs and contains specs. 
+> **Note:** Tigor no AI Monorepo requires human review for all commits. It contains authoritative specifications and security-critical code enforcing compartmentalization, virtualization, ACLs and specifications to build AI code upon.
+
+See also https://github.com/enovikov11/tigor-no-ai
 
 ## Legend
 - **Priority**: `#` marks highly notable projects (coolness ≥ 8)
