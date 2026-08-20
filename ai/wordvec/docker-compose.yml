@@ -1,0 +1,8 @@
+services:
+  wordvec:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_NAME=word2vec-ruscorpora-300
+      - TOP_N=10
