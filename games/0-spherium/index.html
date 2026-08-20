@@ -1,34 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Сфериум</title>
-    <link rel="stylesheet" href="./vendor/jquery-ui.css" />
     <link rel="stylesheet" href="./style.css" />
-    <script src="./vendor/jquery-1.12.4.js"></script>
-    <script src="./vendor/jquery-ui.js"></script>
-    <!-- Если соберешься обновлять three с r92, проверь что нет изменений в генерации геометрии, тк в checkWin захардкожены грани -->
     <script src="./vendor/three.min.js"></script>
     <script src="./vendor/OrbitControls.js"></script>
   </head>
-
   <body>
-    <div id="dialog" title="Сфериум" style="display:none"></div>
-    <div id="icons">
-      <i class="material-icons" id="refresh" onclick="model.refresh();"
-        >refresh</i
-      ><br />
-      <i class="material-icons" id="help" onclick="model.help();">help</i>
+    <canvas id="gl"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div id="turn-indicator">
+        <span class="dot" id="dot-p1"></span><span class="dot" id="dot-p2"></span>
+        <span id="turn-text">Ход красных</span>
+      </div>
+      <div id="score">
+        <span class="score-p1">Красные <b id="score-p1-val">0</b></span>
+        <span class="score-dash">:</span>
+        <span class="score-p2">Синие <b id="score-p2-val">0</b></span>
+      </div>
     </div>
 
-    <script src="./ai.js"></script>
+    <!-- Меню кнопки -->
+    <div id="menu-btns">
+      <button id="btn-restart" title="Заново">↻</button>
+      <button id="btn-menu" title="Меню">☰</button>
+    </div>
+
+    <!-- Главное меню -->
+    <div id="main-menu" class="overlay">
+      <div class="overlay-content">
+        <h1>СФЕРИУМ</h1>
+        <p class="subtitle">Три в ряд на сфере</p>
+        <button id="btn-start">Играть вдвоём</button>
+        <button id="btn-ai">Против ИИ</button>
+        <button id="btn-tutorial">Обучение</button>
+      </div>
+    </div>
+
+    <!-- Обучение -->
+    <div id="tutorial" class="overlay">
+      <div class="overlay-content tutorial-box">
+        <h2 id="tut-title">Как играть</h2>
+        <div id="tut-body"></div>
+        <div class="tut-nav">
+          <button id="tut-prev">←</button>
+          <span id="tut-page"></span>
+          <button id="tut-next">→</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Пауза / подменю -->
+    <div id="pause-menu" class="overlay">
+      <div class="overlay-content">
+        <button id="btn-resume">Продолжить</button>
+        <button id="btn-new-game">Новая игра</button>
+        <button id="btn-main-menu">В меню</button>
+      </div>
+    </div>
+
+    <!-- Сообщение о победе -->
+    <div id="win-overlay" class="overlay">
+      <div class="overlay-content win-box">
+        <h2 id="win-text"></h2>
+        <button id="btn-again">Ещё раз</button>
+        <button id="btn-win-menu">В меню</button>
+      </div>
+    </div>
+
+    <!-- Подсветка грани (hover-индикатор) -->
+    <div id="face-tooltip" class="tooltip"></div>
+
     <script src="./settings.js"></script>
+    <script src="./shaders.js"></script>
     <script src="./view.js"></script>
     <script src="./controller.js"></script>
+    <script src="./ai.js"></script>
     <script src="./model.js"></script>
   </body>
 </html>
