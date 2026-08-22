@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tigor AI Inference — Master Table</title>
+<style>
+:root{--bg:#0a0a0f;--c:#12121a;--c2:#1a1a26;--b:#28283a;--t:#d5d5e8;--m:#5a5a78;--ac:#7c6ff7;--gn:#22c55e;--rd:#ef4444;--yl:#eab308;--bl:#3b82f6;--cy:#06b6d4;--or:#f97316;--pu:#a855f7}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'SF Mono','JetBrains Mono','Cascadia Code',monospace;font-size:11px;line-height:1.45;padding:18px;max-width:1800px;margin:0 auto}
+h1{font-size:18px;font-weight:700;margin-bottom:2px}
+h2{font-size:14px;font-weight:600;margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--b)}
+.sub{color:var(--m);font-size:10px;margin-bottom:12px;line-height:1.5}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.sc{background:var(--c);border:1px solid var(--b);border-radius:6px;padding:8px 10px}
+.sc .l{color:var(--m);font-size:8px;text-transform:uppercase;letter-spacing:.4px}
+.sc .v{font-size:16px;font-weight:700}
+.sc .u{font-size:9px;color:var(--m)}
+table{width:100%;border-collapse:collapse;font-size:10px}
+th{text-align:left;padding:5px 6px;background:var(--c2);color:var(--m);font-weight:500;border-bottom:1px solid var(--b);font-size:8px;text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:2}
+td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.02);white-space:nowrap}
+tr:hover td{background:rgba(124,111,247,.04)}
+.nm{font-weight:600}
+.badge{display:inline-block;padding:1px 4px;border-radius:2px;font-size:8px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;margin-right:2px}
+.bd{background:rgba(34,197,94,.1);color:var(--gn)}.bm{background:rgba(234,179,8,.1);color:var(--yl)}
+.dr{background:rgba(99,102,241,.12);color:var(--ac)}.ds{background:rgba(59,130,246,.12);color:var(--bl)}
+.de{background:rgba(239,68,68,.12);color:var(--rd)}.dk{background:rgba(6,182,212,.12);color:var(--cy)}
+.da{background:rgba(168,85,247,.12);color:var(--pu)}.dx{background:rgba(255,255,255,.05);color:var(--m)}
+.ok{color:var(--gn)}.bad{color:var(--rd)}.warn{color:var(--yl)}
+.tabs{display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap}
+.tb{padding:3px 9px;border:1px solid var(--b);background:0 0;color:var(--m);border-radius:3px;cursor:pointer;font-family:inherit;font-size:9px}
+.tb:hover{color:var(--t);border-color:var(--m)}.tb.a{background:var(--ac);border-color:var(--ac);color:#fff}
+.leg{display:flex;gap:10px;margin-bottom:5px;font-size:9px;color:var(--m);flex-wrap:wrap}
+.note{color:var(--m);font-size:9px;margin-top:4px;line-height:1.5}
+.det{background:var(--c2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-top:6px;display:none}
+.det.show{display:block}
+.ep{background:var(--c);border:1px solid var(--b);border-radius:5px;padding:8px;margin:4px 0}
+.er{display:flex;justify-content:space-between;padding:2px 0}.el{color:var(--m)}.ev{font-weight:600;font-size:10px}
+.click{cursor:pointer}.click:hover td{background:rgba(124,111,247,.07)!important}
+.bar{height:3px;background:rgba(255,255,255,.04);border-radius:2px;margin-top:3px;overflow:hidden}
+.bf{height:100%;border-radius:2px}
+a.hf{color:var(--ac);text-decoration:none;font-size:9px}a.hf:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<h1>⚡ tigor AI Inference — Master Model Table</h1>
+<p class="sub">VM INFERENCE_HOST · EPYC 7702 (128C/256T) · 512 GB DDR4 8ch (~200 GB/s) · RTX PRO 6000 Blackwell (96 GB VRAM, 1800 GB/s) · SSD: 2.0 TB free · HDD: 38 TB free · BenchLM v5.3 Aug 2026 · Q4+ only · zero offload</p>
+
+<div class="g4" id="hw"></div>
+
+<h2>📋 Master Table — All Models</h2>
+<div class="tabs" id="tabs"></div>
+<div class="leg">
+  <span>🟢 DOWNLOAD · 🔵 ON DISK · 🔴 DELETE · 🟣 →HDD (archive) · ⚪ SKIP · 🟡 WATCH</span>
+  <span>✅ = fits · ❌ = too big · ⚠️ = tight</span>
+</div>
+<div id="mt"></div>
+<div id="md" class="det"></div>
+
+<h2>🗑 Disk Cleanup — SSD → HDD migration plan</h2>
+<div id="cl"></div>
+
+<h2>📐 Performance Estimation</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+  <div><h3 style="font-size:11px;color:var(--m)">GPU decode TPS (FP8 + MTP)</h3><div id="ge"></div></div>
+  <div><h3 style="font-size:11px;color:var(--m)">CPU decode TPS (Q4_K_M)</h3><div id="ce"></div></div>
+</div>
+
+<script>
+const HW={gv:96,gb:1800,cr:512,cb:200,co:100,go:8,ss_f:2.0,hd_f:38,usable:404};
+function kv(p,c){return(p*2/1024)*(c/4096)}
+function gtps(p){return Math.round(HW.gb*1e9*0.85/(2*p*1e9))}
+function cpt(q){return Math.round(HW.cb*1e9*0.7/(2*q*1e9))}
+function msu(a){return 1+a*2/3}
+const MTP={"Qwen3.8-27B":0.75,"Gemma 4 31B":0.80,"Mistral-Medium-3.5":0.60,"Laguna S 2.1":0.55,"DeepSeek-V4-Flash":0.60,"Hy3":0.70,"Mistral-Large-3":0.60};
+
+// ═══════ ALL MODELS ═══════
+// n=name, ar=arch, fp8/bf16/q3/q4/q8 in GB, ctx=window, lic=license, cr=creator,
+// vf=vision, mp=mtp, hr=hf_repo, st=status(download/disk/none),
+// re=action(download/keep/delete/archive/skip/watch),
+// bl=bench_rank, bs=bench_score, df=disk_size_GB,
+// gpu_f=GPU_fit, cpu_f=CPU_fit
+const D=[
+  // ─── MUST DOWNLOAD: GPU ───
+  {n:"Qwen3.8-27B",ar:"Dense 27B",fp8:31,bf16:55,q3:12,q4:17,q8:29,ctx:262144,lic:"Apache-2.0",cr:"Alibaba",vf:1,mp:1,hr:"Qwen/Qwen3.8-27B",st:"dl",re:"download",bl:null,bs:null,nt:"🆕 Aug 14. Dense. Bрат Qwen3.8 Max (#6, 79.9). Vision+MTP. SWE-bench 61.7. Context extensible to 1M. Top pick. Weights confirmed Aug 13-14. 1.9M+ GGUF downloads."},
+  {n:"Gemma 4 31B",ar:"Dense 31B",fp8:16,bf16:62,q4:19,q8:32,ctx:262144,lic:"Apache-2.0",cr:"Google",vf:1,mp:1,hr:"google/gemma-4-31B-it",st:"dl",re:"download",bl:null,bs:null,nt:"AIME 89.2%. Co-trained speculative drafter. 140+ langs. Vision. Only Q4_0+Q8_0 on HF (no Q4_K_M)."},
+  {n:"Mistral-Medium-3.5-128B",ar:"Dense 128B",fp8:64,bf16:256,q3:50,q4:82,q8:145,ctx:131072,lic:"Mistral Research",cr:"Mistral",vf:0,mp:0,hr:"mistralai/Mistral-Medium-3.5-128B",st:"dl",re:"download",bl:null,bs:78,nt:"🆕 Apr 29. Dense 128B in FP8=64GB — fits single GPU! BenchLM ~78. Powerhouse. Modified MIT ($20M/month revenue limit). NVFP4: nvidia/Mistral-Medium-3.5-128B-NVFP4."},
+  {n:"Laguna S 2.1",ar:"MoE 118B/8B",fp8:59,bf16:236,q3:45,q4:75,q8:140,ctx:1048576,lic:"Apache-2.0",cr:"Poolside",vf:0,mp:0,hr:"poolside/Laguna-S-2.1",st:"dl",re:"download",bl:null,bs:null,nt:"🆕 Jul 21. US open-weight. Coding SOTA (TB 70.2%). 8B active = fast. 1M ctx. Beating models 10x larger. TB 70.2%, SWE-bench ML 78.5%, SWE-bench Pro 59.4%. NVFP4: poolside/Laguna-S-2.1-NVFP4."},
+  {n:"DeepSeek-V4-Flash",ar:"MoE 284B/13B",fp8:142,bf16:284,q3:105,q4:160,q8:300,ctx:1048576,lic:"MIT",cr:"DeepSeek",vf:0,mp:0,hr:"deepseek-ai/DeepSeek-V4-Flash",st:"dl",re:"download",bl:null,bs:null,nt:"🆕 Jul 31. ARC-AGI 89%, Terminal-Bench 82.7%. MIT. 1M ctx. 13B active. GGUF pending — no bartowski/unsloth yet. NOT on BenchLM."},
+
+  // ─── MUST DOWNLOAD: CPU ───
+  {n:"MiniMax M3",ar:"MoE 428B/23B",fp8:214,bf16:856,q3:195,q4:261,q8:500,ctx:1048576,lic:"MiniMax Comm.",cr:"MiniMax",vf:1,mp:0,hr:"MiniMaxAI/MiniMax-M3",st:"dl",re:"download",bl:19,bs:68.74,nt:"#19 BenchLM. Native multimodal text+image+video. 1M ctx. MSA sparse attention. bartowski GGUF ready."},
+  {n:"Hy3",ar:"MoE 295B/21B",fp8:148,bf16:590,q3:130,q4:182,q8:318,ctx:262144,lic:"Apache-2.0",cr:"Tencent",vf:0,mp:1,hr:"tencent/Hy3",st:"dl",re:"download",bl:20,bs:68.02,nt:"#20 BenchLM. Agent 61, Code 63. Q8=318GB fits CPU! 3.8B MTP params. Apache-2.0."},
+  {n:"Inkling-Small",ar:"MoE 276B/12B",fp8:552,bf16:1100,q3:110,q4:155,q8:280,ctx:1048576,lic:"Apache-2.0",cr:"Thinking Machines",vf:1,mp:0,hr:"thinkingmachines/Inkling-Small",st:"dl",re:"download",bl:33,bs:65.54,nt:"#33. IF 96.5, Math 77.1. 1M ctx. 12B active. Vision+audio. Q4+Q8 both fit."},
+  {n:"GLM-5.2",ar:"MoE 744B/40B",fp8:1488,bf16:2976,q3:376,q4:466,q8:801,ctx:1048576,lic:"MIT",cr:"Z.AI",vf:0,mp:1,hr:"zai-org/GLM-5.2",st:"dl",re:"download",bl:44,bs:63.34,nt:"1M context. Know 82.5, Math 81.4. 5-token MTP. Only Q3 fits CPU (376GB)."},
+  {n:"Mistral-Large-3",ar:"MoE 675B/41B",fp8:338,bf16:1350,q3:310,q4:430,q8:800,ctx:131072,lic:"Apache-2.0",cr:"Mistral",vf:0,mp:0,hr:"mistralai/Mistral-Large-3",st:"dl",re:"download",bl:75,bs:48,nt:"Apache-2.0. 41B active. Q3 fits CPU (310GB). Q4 tight."},
+  {n:"Mellum2-12B-A2.5B",ar:"MoE 12B/3B",fp8:6,bf16:24,q3:5,q4:7,q8:13,ctx:131072,lic:"Apache-2.0",cr:"JetBrains",vf:0,mp:0,hr:"JetBrains/Mellum2-12B-A2.5B-Thinking",st:"dl",re:"download",bl:null,bs:59,nt:"🆕 Coding sub-agent. 2.5B active, ultra-fast. For routing/RAG pipelines."},
+  {n:"NVIDIA Nemotron 3.5 Lightning 30B-A3B",ar:"MoE 30B/3B",fp8:15,bf16:60,q3:12,q4:18,q8:30,ctx:262144,lic:"NVIDIA Open",cr:"NVIDIA",vf:0,mp:0,hr:"nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B",st:"dl",re:"download",bl:null,bs:null,nt:"🆕 Aug 11. 3B active = blazing fast. Agent-optimized. Apache-2.0-equivalent. GGUF via unsloth. ~15GB FP8 fits GPU easily."},
+
+  // ─── ON DISK — KEEP (active use) ───
+  {n:"Qwen3.6-27B-FP8 (vLLM)",ar:"Dense 27B",fp8:29,bf16:54,q4:17,q8:29,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"Qwen/Qwen3.6-27B-FP8",st:"disk",re:"keep",bl:null,bs:null,df:29,nt:"CURRENT vLLM backend. Replace with Qwen3.8-27B-FP8."},
+  {n:"Qwen3.6-35B-A3B-FP8",ar:"MoE 35B/3B",fp8:35,bf16:70,q4:22,q8:38,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"Qwen/Qwen3.6-35B-A3B-FP8",st:"disk",re:"keep",bl:null,bs:null,df:35,nt:"3B active = blazing fast. Good GPU backup if 3.8 has issues."},
+  {n:"GLM-5.1 (Q3_K_M only)",ar:"MoE 754B/62B",fp8:1508,bf16:3000,q3:372,q4:460,q8:801,ctx:131072,lic:"MIT",cr:"Z.AI",vf:0,mp:0,hr:"unsloth/GLM-5.1-GGUF",st:"disk",re:"keep",bl:26,bs:66.91,df:372,nt:"#26 BenchLM. Know 77.6. ON DISK: keep Q3_K_M ~372GB, delete Q4 (460GB doesn't fit)."},
+  {n:"SIQ-1-35B (Q4)",ar:"Dense 35B",fp8:17,bf16:70,q4:20,q8:40,ctx:131072,lic:"MIT",cr:"AlexWortega",vf:0,mp:0,hr:"AlexWortega/SIQ-1-35B",st:"disk",re:"keep",bl:null,bs:null,df:20,nt:"Guardrail model. Keep Q4_K_M GGUF (20GB). Delete safetensors (66GB)."},
+  {n:"whisper medium",ar:"ASR 1.5B",fp8:0,bf16:0,q4:0,q8:0,ctx:0,lic:"MIT",cr:"OpenAI",vf:0,mp:0,hr:"openai/whisper-medium",st:"disk",re:"keep",bl:null,bs:null,df:1.5,nt:"GGML ASR. 1.5GB. Tiny. Keep."},
+
+  // ─── ON DISK — DELETE (garbage) ───
+  {n:"Qwen3.6-35B-A3B-GGUF (all)",ar:"MoE 35B/3B",fp8:0,bf16:0,q4:16,q8:35,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"unsloth/Qwen3.6-35B-A3B-GGUF",st:"disk",re:"delete",bl:null,bs:null,df:512,nt:"512GB! 26 quants. Superseded by Qwen3.8-27B. Pure garbage."},
+  {n:"Qwen3.6-27B-GGUF (all)",ar:"Dense 27B",fp8:0,bf16:0,q4:17,q8:27,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"unsloth/Qwen3.6-27B-GGUF",st:"disk",re:"delete",bl:null,bs:null,df:398,nt:"398GB! 24 quants + mmproj. Superseded by Qwen3.8-27B."},
+  {n:"Wan-AI (all 5)",ar:"Diffusion",fp8:0,bf16:0,q4:0,q8:0,ctx:0,lic:"various",cr:"Wan-AI",vf:1,mp:0,hr:"Wan-AI/",st:"disk",re:"delete",bl:null,bs:null,df:382,nt:"382GB. T2V, I2V, Animate, S2V, TI2V. Not LLM. Delete unless you generate video."},
+  {n:"Qwen3-235B-A22B-GGUF",ar:"MoE 235B/22B",fp8:0,bf16:0,q4:116,q8:233,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"unsloth/Qwen3-235B-A22B-GGUF",st:"disk",re:"delete",bl:null,bs:null,df:349,nt:"349GB. IQ4 116G + Q8 233G. Not in BenchLM. Old gen. Replace with MiniMax M3."},
+  {n:"Qwen3.5-397B-A17B-GGUF",ar:"MoE 397B/17B",fp8:0,bf16:0,q3:150,q4:228,q8:429,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"unsloth/Qwen3.5-397B-A17B-GGUF",st:"disk",re:"delete",bl:null,bs:null,df:256,nt:"256GB. UD-Q4_K_XL 228G. Not in BenchLM. Old."},
+  {n:"HauhauCS-Qwen3.5-Uncensored",ar:"MoE 35B/3B",fp8:0,bf16:65,q4:20,q8:35,ctx:131072,lic:"Apache-2.0",cr:"HauhauCS",vf:0,mp:0,hr:"HauhauCS/Qwen3.5-35B-A3B-Uncensored",st:"disk",re:"delete",bl:null,bs:null,df:227,nt:"227GB. Uncensored wrapper on old Qwen3.5. Useless."},
+  {n:"cyankiwi AWQ (3 models)",ar:"AWQ",fp8:0,bf16:0,q4:0,q8:0,ctx:0,lic:"Apache-2.0",cr:"cyankiwi",vf:0,mp:0,hr:"cyankiwi/",st:"disk",re:"delete",bl:null,bs:null,df:139,nt:"139GB. AWQ safetensors — outdated format. Not in BenchLM."},
+  {n:"MiniMax-M2.5-GGUF",ar:"MoE ~300B/20B",fp8:0,bf16:0,q4:129,q8:0,ctx:65536,lic:"Apache-2.0",cr:"MiniMax",vf:0,mp:0,hr:"unsloth/MiniMax-M2.5-GGUF",st:"disk",re:"delete",bl:null,bs:null,df:129,nt:"129GB. Superseded by M3. GGUF for M3 available."},
+  {n:"Qwen3.6-27B (BF16)",ar:"Dense 27B",fp8:0,bf16:54,q4:17,q8:29,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"Qwen/Qwen3.6-27B",st:"disk",re:"delete",bl:null,bs:null,df:52,nt:"52GB. BF16 redundant. Superseded by Qwen3.8."},
+  {n:"Qwen3.6-35B-A3B (BF16)",ar:"MoE 35B/3B",fp8:0,bf16:70,q4:22,q8:38,ctx:131072,lic:"Apache-2.0",cr:"Alibaba",vf:0,mp:0,hr:"Qwen/Qwen3.6-35B-A3B",st:"disk",re:"delete",bl:null,bs:null,df:67,nt:"67GB. BF16 redundant. Superseded."},
+  {n:"SIQ-1-35B (safetensors)",ar:"Dense 35B",fp8:0,bf16:70,q4:20,q8:40,ctx:131072,lic:"MIT",cr:"AlexWortega",vf:0,mp:0,hr:"AlexWortega/SIQ-1-35B",st:"disk",re:"delete",bl:null,bs:null,df:66,nt:"66GB. Safetensors redundant. Keep Q4 GGUF (20GB) only."},
+
+  // ─── ON DISK — ARCHIVE to HDD ───
+  {n:"GLM-5-GGUF (IQ2_M only)",ar:"MoE 744B/40B",fp8:0,bf16:0,q4:460,q8:801,ctx:200000,lic:"MIT",cr:"Z.AI",vf:0,mp:0,hr:"unsloth/GLM-5-GGUF",st:"disk",re:"archive",bl:32,bs:65.61,df:237,nt:"237GB. IQ2_M only (7 shards). Useless quality. Superseded by 5.1. →HDD."},
+  {n:"GLM-4.7-Flash-GGUF",ar:"MoE ~55B",fp8:0,bf16:0,q4:18,q8:0,ctx:131072,lic:"MIT",cr:"Z.AI",vf:0,mp:0,hr:"unsloth/GLM-4.7-Flash-GGUF",st:"disk",re:"archive",bl:null,bs:null,df:18,nt:"18GB. Old GLM. →HDD."},
+
+  // ─── SKIP — too big for single GPU/CPU ───
+  {n:"Qwen3.8-2.4T-A95B",ar:"MoE 2.4T/95B",fp8:2400,bf16:4800,q3:1200,q4:1500,q8:2800,ctx:1048576,lic:"Qwen License",cr:"Alibaba",vf:0,mp:1,hr:"Qwen/Qwen3.8-2.4T-A95B",st:"none",re:"skip",bl:6,bs:79.91,nt:"#6 BenchLM (79.9!). Needs multi-GPU cluster. ~2.4TB FP8."},
+  {n:"Kimi K3",ar:"MoE 2.8T/32B",fp8:2800,bf16:5600,q3:1400,q4:1800,q8:3400,ctx:1048576,lic:"Kimi License",cr:"Moonshot",vf:0,mp:0,hr:"moonshotai/Kimi-K3",st:"none",re:"skip",bl:4,bs:80.96,nt:"#4 BenchLM (80.96!). Largest open-weight 2.8T. Needs massive cluster."},
+  {n:"Inkling (975B)",ar:"MoE 975B/41B",fp8:1950,bf16:3900,q3:500,q4:587,q8:1000,ctx:1048576,lic:"Apache-2.0",cr:"Thinking Machines",vf:1,mp:0,hr:"thinkingmachines/Inkling",st:"none",re:"skip",bl:24,bs:67.04,nt:"#24. ~2TB BF16. Multi-GPU. Inkling-Small is the CPU option."},
+  {n:"Muse Glimmer 30B",ar:"Dense 30B",fp8:15,bf16:60,q3:12,q4:18,q8:36,ctx:131072,lic:"Apache-2.0",cr:"Meta",vf:1,mp:0,hr:"meta/Muse-Glimmer-30B",st:"none",re:"skip",bl:112,bs:52.5,nt:"#112 BenchLM (52.5). Weak. Skip."},
+  {n:"Devstral-Small-2-24B",ar:"Dense 24B",fp8:12,bf16:48,q3:10,q4:16,q8:29,ctx:131072,lic:"Apache-2.0",cr:"Mistral",vf:0,mp:0,hr:"mistralai/Devstral-Small-2",st:"none",re:"skip",bl:null,bs:null,nt:"Coding 24B. Superseded by Qwen3.8-27B for general use."},
+  {n:"Gemma 4 26B-A4B",ar:"MoE 26B/4B",fp8:13,bf16:52,q3:5,q4:10,q8:18,ctx:262144,lic:"Apache-2.0",cr:"Google",vf:1,mp:0,hr:"google/gemma-4-26b-a4b",st:"none",re:"skip",bl:null,bs:null,nt:"MoE variant. 4B active = fast but low quality. 31B dense is better."},
+
+  // ─── WATCH — upcoming ───
+  {n:"GLM-5.3 (coming ~Aug 28)",ar:"MoE 743B/~100B",fp8:null,bf16:null,q3:null,q4:null,q8:null,ctx:1048576,lic:"TBD (MIT?)",cr:"Z.AI",vf:0,mp:0,hr:"zai-org/GLM-5.3 (TBD)",st:"none",re:"watch",bl:null,bs:null,nt:"🆕 Aug 14 API-only. Coding SOTA. Terminal-Bench + Agents' Last Exam leader. 50% better than 5.2. HF repo zai-org/GLM-5.3 EXISTS but PRIVATE (401). Open weights ~Aug 28."},
+];
+
+// ═══════ COMPUTE FITS ═══════
+D.forEach(m=>{
+  const act=m.ar.match(/\d+B\//)?parseInt(m.ar.match(/\d+B\/(\d+)B/)[1]):parseInt(m.ar.match(/(\d+)B/)[1])||m.fp8||0;
+  m._act=act||m.fp8>0?act:0;
+  const real_act=act>0&&act<parseInt(m.ar.match(/\d+B/)?m.ar.match(/(\d+)B/)[1]:0)?act:parseInt(m.ar.match(/(\d+)B/)[1])||0;
+  const p=real_act||0;
+  m._gpu_vram=m.fp8?(m.fp8+kv(p||m.fp8>0?m.fp8*4:0,131072)+HW.go).toFixed(0):'—';
+  m._gpu_fit=m.fp8&&m._gpu_vram<=96;
+  m._gpu_tight=m.fp8&&!m._gpu_fit&&m._gpu_vram<=108;
+  m._cpu_q4=m.q4&&m.q4<=HW.usable;
+  m._cpu_q8=m.q8&&m.q8<=HW.usable;
+  m._cpu_q3=m.q3&&m.q3<=HW.usable;
+  m._cpu_tps=m.q4?cpt(m.q4):'—';
+  m._p=p;
+});
+
+// ═══════ HW ═══════
+document.getElementById('hw').innerHTML=[
+  {l:'GPU VRAM',v:96,u:'GB'}, {l:'GPU BW',v:'1 800',u:'GB/s'},
+  {l:'CPU RAM',v:512,u:`GB (${HW.usable} usable)`}, {l:'CPU BW',v:200,u:'GB/s DDR4'},
+  {l:'SSD free',v:2.0,u:'TB'}, {l:'HDD free',v:38,u:'TB (archive)'},
+].map(c=>`<div class="sc"><div class="l">${c.l}</div><div class="v">${c.v}</div><div class="u">${c.u}</div></div>`).join('');
+
+// ═══════ TABLE ═══════
+const CATS={all:'All',dl:'🟢 Download',disk:'🔵 On Disk',del:'🔴 Delete',hdd:'🟣 →HDD',bench:'🏆 BenchLM',new:"🆕 Latest",skip:'⚪ Skip',watch:'🟡 Watch'};
+document.getElementById('tabs').innerHTML=Object.keys(CATS).map(k=>`<button class="tb ${k==='all'?'a':''}" onclick="ft('${k}',this)">${CATS[k]}</button>`).join('');
+
+function render(cat){
+  const rows=cat==='all'?D:
+    cat==='dl'?D.filter(m=>m.re==='download'):
+    cat==='disk'?D.filter(m=>m.st==='disk'&&(m.re==='keep')):
+    cat==='del'?D.filter(m=>m.re==='delete'):
+    cat==='hdd'?D.filter(m=>m.re==='archive'):
+    cat==='bench'?D.filter(m=>m.bl!=null):
+    cat==='new'?D.filter(m=>m.nt&&m.nt.startsWith('🆕')):
+    cat==='skip'?D.filter(m=>m.re==='skip'):
+    cat==='watch'?D.filter(m=>m.re==='watch'):D;
+  let h='<table><thead><tr><th>Model</th><th>Arch</th><th>BenchLM</th><th>FP8</th><th>GPU</th><th>Q3</th><th>Q4</th><th>Q8</th><th>CPU</th><th>TPS</th><th>Disk</th><th>Action</th><th>Notes</th></tr></thead><tbody>';
+  rows.forEach(m=>{
+    const aem=m.ar.includes('/')?` / <b>${m.ar.split('/').pop()}</b>`:'';
+    const dsk=m.df?`<b>${m.df}G</b>`:'';
+    const rc=m.re==='delete'?'de':m.re==='archive'?'da':m.re==='keep'?'dk':m.re==='download'?'dr':m.re==='skip'?'dx':m.re==='watch'?'bm':'dm';
+    const rt=m.re==='delete'?'DELETE':m.re==='archive'?'→HDD':m.re==='keep'?'KEEP':m.re==='download'?'DOWNLOAD':m.re==='skip'?'SKIP':m.re==='watch'?'WATCH':'—';
+    const cpu_badge=m._cpu_q4?'✅ Q4/Q8':m._cpu_q8?'✅ Q8':m._cpu_q3?'⚠️ Q3':'❌';
+    h+=`<tr class="click" onclick="sd('${m.n.replace(/'/g,"\\'")}')">`;
+    h+=`<td class="nm"><a class="hf" href="https://huggingface.co/${m.hr.replace(/\(.*?\)/,'')}" target="_blank">${m.n}</a></td>`;
+    h+=`<td><span class="badge ${m.ar.startsWith('Dense')?'bd':'bm'}">${m.ar.split('/')[0].trim()}</span>${aem}</td>`;
+    h+=`<td style="color:${m.bs>=70?'var(--gn)':m.bs>=60?'var(--bl)':m.bs>=50?'var(--yl)':'var(--m)'};font-weight:600">${m.bl!=null?'#'+m.bl:'—'} ${m.bs?m.bs.toFixed(1):''}</td>`;
+    h+=`<td>${m.fp8||'—'}</td>`;
+    h+=`<td class="${m._gpu_fit?'ok':m._gpu_tight?'warn':'bad'}">${m._gpu_fit?'✅ '+m._gpu_vram+'G':m._gpu_tight?'⚠️ '+m._gpu_vram+'G':'❌'}</td>`;
+    h+=`<td>${m.q3||'—'}</td><td>${m.q4||'—'}</td><td>${m.q8||'—'}</td>`;
+    h+=`<td class="${m._cpu_q4?'ok':m._cpu_q3?'warn':'bad'}">${cpu_badge}</td>`;
+    h+=`<td>${m._cpu_tps}</td>`;
+    h+=`<td>${dsk}</td>`;
+    h+=`<td><span class="badge ${rc}">${rt}</span></td>`;
+    h+=`<td style="color:var(--m);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.nt}">${m.nt.split('.')[0]}</td></tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('mt').innerHTML=h;
+}
+render('all');
+
+function ft(c,b){document.querySelectorAll('#tabs .tb').forEach(x=>x.classList.remove('a'));b.classList.add('a');render(c);document.getElementById('md').classList.remove('show')}
+
+function sd(name){
+  const m=D.find(x=>x.n===name);if(!m)return;
+  const acc=MTP[m.n]||0.60;
+  const raw=m._p?gtps(m._p):'—';
+  const boosted=typeof raw==='number'?Math.round(raw*msu(acc)):'—';
+  const aem=m.ar.includes('/')?` / <b>${m.ar.split('/').pop()}</b>`:'';
+  let h=`<h3 style="margin:0 0 6px">${m.n}</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div class="ep">
+    <div class="er"><span class="el">Arch</span><span class="ev">${m.ar}${aem}</span></div>
+    <div class="er"><span class="el">Context</span><span class="ev">${(m.ctx/1024).toFixed(0)}K</span></div>
+    <div class="er"><span class="el">License</span><span class="ev">${m.lic}</span></div>
+    <div class="er"><span class="el">Creator</span><span class="ev">${m.cr}</span></div>
+    <div class="er"><span class="el">Vision</span><span class="ev">${m.vf?'✅':'❌'}</span></div>
+    <div class="er"><span class="el">MTP</span><span class="ev">${m.mp?'✅':'❌'}</span></div></div>
+    <div class="ep">
+    <div class="er"><span class="el">GPU VRAM (128K ctx)</span><span class="ev ${m._gpu_fit?'ok':'bad'}">${m._gpu_vram} / 96 GB</span></div>
+    <div class="er"><span class="el">GPU TPS raw</span><span class="ev">${raw}</span></div>
+    <div class="er"><span class="el">GPU TPS (MTP ${acc*100|0}%)</span><span class="ev ok">~${boosted}</span></div>
+    <div class="er"><span class="el">MTP speedup</span><span class="ev ok">${typeof boosted==='number'&&typeof raw==='number'?(boosted/raw).toFixed(2)+'x':'—'}</span></div></div>
+    <div class="ep">
+    <div class="er"><span class="el">Q3_K_M</span><span class="ev">${m.q3||'—'} GB ${m._cpu_q3?'✅':'❌'}</span></div>
+    <div class="er"><span class="el">Q4_K_M</span><span class="ev">${m.q4||'—'} GB ${m._cpu_q4?'✅':'❌'}</span></div>
+    <div class="er"><span class="el">Q8_0</span><span class="ev">${m.q8||'—'} GB ${m._cpu_q8?'✅':'❌'}</span></div>
+    <div class="er"><span class="el">CPU TPS (Q4)</span><span class="ev">${m._cpu_tps}</span></div></div>
+    <div class="ep">
+    <div class="er"><span class="el">FP8</span><span class="ev">${m.fp8||'—'} GB</span></div>
+    <div class="er"><span class="el">BF16</span><span class="ev">${m.bf16||'—'} GB</span></div>
+    <div class="er"><span class="el">On disk</span><span class="ev">${m.df?m.df+' GB':'no'}</span></div>
+    <div class="er"><span class="el">Action</span><span class="ev"><span class="badge ${m.re==='delete'?'de':m.re==='archive'?'da':m.re==='keep'?'dk':m.re==='download'?'dr':m.re==='skip'?'dx':m.re==='watch'?'bm':'dm'}">${m.re.toUpperCase()}</span></span></div></div></div>`;
+  h+=`<p class="note">📦 <a class="hf" href="https://huggingface.co/${m.hr.replace(/\(.*?\)/,'')}" target="_blank">${m.hr}</a><br>${m.nt}</p>`;
+  const d=document.getElementById('md');d.innerHTML=h;d.classList.add('show');
+}
+
+// ═══════ CLEANUP ═══════
+const del=D.filter(m=>['delete','archive'].includes(m.re)).sort((a,b)=>b.df-a.df);
+const tot=del.reduce((s,m)=>s+m.df,0);
+let cl=`<p style="color:var(--gn);margin-bottom:6px">Recover <b>~${tot} GB</b> from SSD → HDD /hdd/internet/archived/ (38 TB free)</p>`;
+cl+='<table><thead><tr><th>Model</th><th>Disk</th><th>Action</th><th>Save</th><th>Reason</th><th>Replace with</th></tr></thead><tbody>';
+const rp={"Qwen3.6-35B-A3B-GGUF":"Qwen3.8-27B","Qwen3.6-27B-GGUF":"Qwen3.8-27B","Wan-AI":"n/a","Qwen3-235B":"MiniMax M3","Qwen3.5-397B":"MiniMax M3","GLM-5":"GLM-5.1 Q3","HauhauCS":"n/a","cyankiwi":"n/a","MiniMax-M2.5":"MiniMax M3","Qwen3.6-27B (BF16)":"Qwen3.8-27B-FP8","Qwen3.6-35B-A3B (BF16)":"Qwen3.8-27B-FP8","SIQ-1-35B (safetensors)":"keep Q4 GGUF","GLM-4.7":"GLM-5.1"};
+del.forEach(d=>{
+  const rk=Object.keys(rp).find(k=>d.n.toLowerCase().includes(k.toLowerCase()));
+  cl+=`<tr><td class="nm">${d.n}</td><td>${d.df} GB</td><td><span class="badge ${d.re==='delete'?'de':'da'}">${d.re==='delete'?'DELETE':'→HDD'}</span></td>`;
+  cl+=`<td class="ok">+${d.df} GB</td>`;
+  cl+=`<td style="color:var(--m);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.nt}">${d.nt.split('.')[0]}</td>`;
+  cl+=`<td>${rk?rp[rk]:'—'}</td></tr>`;
+});
+cl+='</tbody></table>';
+cl+=`<p class="note">Current SSD: 2.0 TB free → ~${(2.0+tot/1024).toFixed(1)} TB after cleanup. Target: keep SSD for active models (FP8 + recent GGUF), archive old to HDD.</p>`;
+document.getElementById('cl').innerHTML=cl;
+
+// ═══════ ESTIMATION ═══════
+const gx=[{n:"Qwen3.8-27B",p:27,fp8:31},{n:"Gemma 4 31B",p:31,fp8:16},{n:"Nemotron 3.5 Lightning",p:3,fp8:15},{n:"Mistral-Medium-3.5",p:128,fp8:64},{n:"Laguna S 2.1",p:8,fp8:59}];
+document.getElementById('ge').innerHTML=gx.map(e=>{
+  const k=kv(e.p,131072),t=e.fp8+k+HW.go,f=t<=96,r=gtps(e.p),a=MTP[e.n]||0.60,b=Math.round(r*msu(a));
+  return`<div class="ep"><div style="font-weight:600;margin-bottom:2px">${e.n}</div>
+  <div class="er"><span class="el">VRAM</span><span class="ev ${f?'ok':'bad'}">${t.toFixed(0)}/96G</span></div>
+  <div class="er"><span class="el">TPS</span><span class="ev">${r}</span><span class="el" style="margin-left:8px">MTP ${a*100|0}%</span><span class="ev ok">~${b}</span></div>
+  <div class="bar"><div class="bf" style="width:${Math.min(100,t/96*100)}%;background:${f?'var(--gn)':'var(--rd)'}"></div></div></div>`;
+}).join('');
+
+const cx=[{n:"MiniMax M3",q:261},{n:"Hy3",q:182},{n:"DeepSeek-V4-Flash",q:160},{n:"Inkling-Small",q:155},{n:"GLM-5.1 (Q3)",q:372},{n:"Mistral-Large-3 (Q3)",q:310},{n:"Qwen3.8-27B",q:17}];
+document.getElementById('ce').innerHTML=cx.map(e=>{
+  const f=e.q<=HW.usable,t=cpt(e.q);
+  return`<div class="ep"><div style="font-weight:600;margin-bottom:2px">${e.n}</div>
+  <div class="er"><span class="el">Q4_K_M</span><span class="ev ${f?'ok':'bad'}">${e.q}/${HW.usable} GB</span></div>
+  <div class="er"><span class="el">CPU TPS</span><span class="ev">${t} tok/s</span></div>
+  <div class="bar"><div class="bf" style="width:${Math.min(100,e.q/HW.usable*100)}%;background:${f?'var(--gn)':'var(--rd)'}"></div></div></div>`;
+}).join('');
+</script>
+</body>
+</html>

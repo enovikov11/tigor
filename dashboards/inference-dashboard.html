@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Inference Dashboard — tigor</title>
+<style>
+  :root { --bg: #0a0a0f; --card: #12121c; --card2: #1a1a28; --border: #2a2a3e; --text: #d0d0e0; --muted: #6b6b8b; --accent: #7c6ff7; --green: #22c55e; --red: #ef4444; --yellow: #eab308; --blue: #3b82f6; --cyan: #06b6d4; --purple: #a855f7; --orange: #f97316; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 2px; letter-spacing: -0.5px; }
+  h2 { font-size: 15px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+  h3 { font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: var(--muted); }
+  .subtitle { color: var(--muted); font-size: 11px; margin-bottom: 20px; line-height: 1.6; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+  .b-dense { background: rgba(34,197,94,0.12); color: var(--green); }
+  .b-moe { background: rgba(234,179,8,0.12); color: var(--yellow); }
+  .b-dl { background: rgba(99,102,241,0.12); color: var(--accent); }
+  .b-disk { background: rgba(59,130,246,0.12); color: var(--blue); }
+  .b-del { background: rgba(239,68,68,0.12); color: var(--red); }
+  .b-partial { background: rgba(249,115,22,0.12); color: var(--orange); }
+  .b-keep { background: rgba(6,182,212,0.12); color: var(--cyan); }
+  .ok { color: var(--green); } .bad { color: var(--red); } .warn { color: var(--yellow); } .info { color: var(--blue); }
+  .grid { display: grid; gap: 10px; margin-bottom: 16px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .stat-card .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-card .value { font-size: 22px; font-weight: 700; }
+  .stat-card .unit { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+  th { text-align: left; padding: 8px 10px; background: var(--card2); color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 1; }
+  td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+  tr:hover td { background: rgba(124,111,247,0.04); }
+  .model-name { font-weight: 600; color: var(--text); }
+  .est-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 8px 0; }
+  .est-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .est-l { color: var(--muted); }
+  .est-v { font-weight: 600; font-size: 11px; }
+  .bar-wrap { height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .section { margin-bottom: 36px; }
+  .mtp-box { background: rgba(124,111,247,0.04); border: 1px solid rgba(124,111,247,0.15); border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .detail-card { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 10px; display: none; }
+  .detail-card.show { display: block; }
+  .click-row { cursor: pointer; }
+  .click-row:hover td { background: rgba(124,111,247,0.08) !important; }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; margin-right: 4px; }
+  .tag-arch { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .legend { display: flex; gap: 14px; margin-bottom: 10px; font-size: 10px; color: var(--muted); flex-wrap: wrap; }
+  .note { color: var(--muted); font-size: 10px; margin-top: 8px; line-height: 1.6; }
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tab-btn { padding: 5px 14px; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 11px; transition: all 0.15s; }
+  .tab-btn:hover { color: var(--text); border-color: var(--muted); }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .hf-link { color: var(--accent); text-decoration: none; font-size: 10px; }
+  .hf-link:hover { text-decoration: underline; }
+  .score-bar { display: inline-block; width: 60px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-left: 6px; vertical-align: middle; }
+  .score-fill { height: 100%; border-radius: 2px; }
+  @media (max-width: 900px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } .grid-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>⚡ AI Inference Dashboard</h1>
+<p class="subtitle">
+  tigor · VM INFERENCE_HOST · EPYC 7702 (128C/256T) + 512 GB DDR4 8ch + RTX PRO 6000 Blackwell (96 GB)<br>
+  BenchLM v5.3 (Aug 15 2026) · Disk scan: 3 300 GB virtiofs · Q4+ only · Zero offload policy
+</p>
+
+<div id="hw-cards" class="grid grid-4"></div>
+
+<!-- ═══════════════ GPU ═══════════════ -->
+<div class="section">
+<h2>🟢 GPU — vLLM Candidates (96 GB VRAM, FP8)</h2>
+<div class="legend">
+  <span>Dense: weights + KV(128K) + overhead must fit ≤ 96 GB</span>
+  <span>MoE: total experts stored even if active is small</span>
+</div>
+<div id="gpu-table"></div>
+</div>
+
+<!-- ═══════════════ CPU ═══════════════ -->
+<div class="section">
+<h2>🔵 CPU — llama.cpp Candidates (512 GB RAM, GGUF Q4/Q8)</h2>
+<div class="legend">
+  <span>Usable: ~404 GB (512 − 100 OS/reserve − 8 overhead)</span>
+  <span>MoE stores ALL experts — active params don't reduce RAM</span>
+</div>
+<div id="cpu-table"></div>
+</div>
+
+<!-- ═══════════════ BENCHMARK ═══════════════ -->
+<div class="section">
+<h2>🏆 BenchLM Open-Weight Leaderboard</h2>
+<div class="tab-bar" id="bw-tabs"></div>
+<div id="bw-table"></div>
+<div id="bw-detail" class="detail-card"></div>
+</div>
+
+<!-- ═══════════════ DISK ═══════════════ -->
+<div class="section">
+<h2>💾 On-Disk Inventory (/ssd/internet, 3 300 GB virtiofs)</h2>
+<div id="disk-table"></div>
+</div>
+
+<!-- ═══════════════ CLEANUP ═══════════════ -->
+<div class="section">
+<h2>🗑 Cleanup Candidates</h2>
+<div id="cleanup-table"></div>
+</div>
+
+<!-- ═══════════════ ESTIMATION ═══════════════ -->
+<div class="section">
+<h2>📐 Estimation Engine</h2>
+<div class="grid grid-2">
+  <div>
+    <h3>GPU Decode TPS (vLLM FP8)</h3>
+    <div id="gpu-est"></div>
+  </div>
+  <div>
+    <h3>CPU Decode TPS (llama.cpp Q4)</h3>
+    <div id="cpu-est"></div>
+  </div>
+</div>
+<div class="mtp-box">
+<h3 style="margin-top:0; color:var(--accent);">MTP / Speculative Decoding Impact</h3>
+<p style="color:var(--muted); font-size:10px; margin-bottom:10px;">2 speculative tokens · speedup = 1 + acceptance × (2/3) · rates from live vLLM logs</p>
+<div id="mtp-est"></div>
+</div>
+</div>
+
+<script>
+// ── HW ──────────────────────────────────────────
+const H = {
+  gpu: { vram: 96, bw: 1800, tflops_fp8: 2048 },
+  cpu: { cores: 128, ram: 512, bw: 200, os_res: 100, over: 8 },
+  gpu_over: 8
+};
+
+// ── BENCHMARK DATA (BenchLM Aug 15 2026) ───────
+const B = {
+  "Qwen3.8 Max":      { r:6,  s:79.91, ag:79.2, cd:66.7, re:94.3, mm:88.1, kn:66.5, if_:97.9, ma:null,
+    total:"2.4T", act:"95B", arch:"MoE 512e top-10", ctx:262144, lic:"Qwen License", creator:"Alibaba", hf:"Qwen/Qwen3.8-2.4T-A95B",
+    fp8:2446, vision:false, mtp:true, note:"Vision stripped from open release. API only for vision." },
+  "MiniMax M3":       { r:19, s:68.74, ag:39.8, cd:46.7, re:null, mm:47.5, kn:65.9, if_:null, ma:null,
+    total:"428B", act:"23B", arch:"MoE 256e", ctx:1048576, lic:"MiniMax Comm.", creator:"MiniMax", hf:"MiniMaxAI/MiniMax-M3",
+    fp8:856, vision:true, mtp:false, note:"Native multimodal text+image+video. MSA sparse attention for 1M ctx." },
+  "Hy3":              { r:20, s:68.02, ag:61.3, cd:63.5, re:null, mm:null, kn:null, if_:null, ma:null,
+    total:"295B", act:"21B", arch:"MoE 192e top-8", ctx:262144, lic:"Apache-2.0", creator:"Tencent", hf:"tencent/Hy3",
+    fp8:590, vision:false, mtp:true, note:"3.8B MTP params. Strong agentic (61.3). Needs 8x H20." },
+  "Inkling":          { r:24, s:67.04, ag:40.2, cd:42.2, re:null, mm:51.1, kn:69.1, if_:91.1, ma:78.6,
+    total:"975B", act:"41B", arch:"MoE", ctx:1048576, lic:"Apache-2.0", creator:"Thinking Machines", hf:"thinkingmachines/Inkling",
+    fp8:1950, vision:true, mtp:false, note:"Largest US open-weight. Text+image+audio. ~2TB BF16." },
+  "GLM-5.1":          { r:26, s:66.91, ag:47.5, cd:61.5, re:null, mm:null, kn:77.6, if_:null, ma:64.2,
+    total:"754B", act:"62B", arch:"MoE DSA", ctx:131072, lic:"MIT", creator:"Z.AI", hf:"zai-org/GLM-5.1",
+    fp8:1508, vision:false, mtp:false, note:"Strong knowledge (77.6). Agentic engineering focus." },
+  "GLM-5":            { r:32, s:65.61, ag:55.2, cd:60.7, re:75.1, mm:null, kn:77.9, if_:87.2, ma:56.9,
+    total:"744B", act:"40B", arch:"MoE 256e 8+1", ctx:200000, lic:"MIT", creator:"Z.AI", hf:"zai-org/GLM-5",
+    fp8:1488, vision:false, mtp:false, note:"IF 87.2. Predecessor to 5.1." },
+  "Inkling-Small":    { r:33, s:65.54, ag:56.7, cd:62.2, re:37.1, mm:51.2, kn:72.0, if_:96.5, ma:77.1,
+    total:"276B", act:"12B", arch:"MoE", ctx:1048576, lic:"Apache-2.0", creator:"Thinking Machines", hf:"thinkingmachines/Inkling-Small",
+    fp8:552, vision:true, mtp:false, note:"IF 96.5 — best instruction following. Math 77.1. Quarter size of Inkling." },
+  "GLM-5.2":          { r:44, s:63.34, ag:58.3, cd:63.8, re:null, mm:null, kn:82.5, if_:null, ma:81.4,
+    total:"744B", act:"40B", arch:"MoE 256e 8+1", ctx:1048576, lic:"MIT", creator:"Z.AI", hf:"zai-org/GLM-5.2",
+    fp8:1488, vision:false, mtp:true, note:"1M context. 5-token MTP. Know 82.5, Math 81.4. IndexCache." },
+  "MiniMax M2.7":     { r:45, s:63.06, ag:34.2, cd:44.2, re:null, mm:null, kn:null, if_:null, ma:null,
+    total:"229B", act:"10B", arch:"MoE 256e top-8", ctx:200000, lic:"Modified MIT", creator:"MiniMax", hf:"MiniMaxAI/MiniMax-M2.7",
+    fp8:458, vision:false, mtp:false, note:"Agentic focus. 10B active = fast." },
+  // GPU-fit dense (not on BenchLM yet)
+  "Qwen3.8-27B":      { r:'—', s:null, ag:null, cd:null, re:null, mm:null, kn:null, if_:null, ma:null,
+    total:"27B", act:"27B", arch:"Dense 64L GDN+GA", ctx:262144, lic:"Apache-2.0", creator:"Alibaba", hf:"Qwen/Qwen3.8-27B",
+    fp8:14, vision:true, mtp:true, note:"#6 sibling. Released Aug 14. SWE-bench Pro 61.7. Context extensible to 1M." },
+  "Gemma 4 31B":      { r:'—', s:null, ag:null, cd:null, re:null, mm:null, kn:null, if_:null, ma:null,
+    total:"31B", act:"31B", arch:"Dense", ctx:262144, lic:"Apache-2.0", creator:"Google", hf:"google/gemma-4-31B",
+    fp8:16, vision:true, mtp:true, note:"AIME 89.2%. 140+ langs. Co-trained speculative drafter. Instruct: gemma-4-31B-it." },
+};
+
+// ── DISK DATA (exact sizes from scan) ──────────
+const DISK = [
+  { org:"unsloth", model:"Qwen3.6-35B-A3B-GGUF",  gb:512, format:"GGUF", vars:["UD-Q8 36G","Q8 35G","UD-Q6 30G","UD-Q5 25G","UD-Q4 21G","Q4 16G","UD-Q3 16G","IQ4 17G","IQ3 13G","Q2 12G","IQ2 11G","IQ1 9G"], status:"delete", why:"superseded by 3.8-27B, not in BenchLM", bench:null },
+  { org:"unsloth", model:"GLM-5.1-GGUF",           gb:432, format:"GGUF", vars:["UD-Q4_K_M: 465G (11 shards)"], status:"partial", why:"keep Q3_K_M ~372G only, delete Q4+ (60G save)", bench:26 },
+  { org:"unsloth", model:"Qwen3.6-27B-GGUF",       gb:398, format:"GGUF", vars:["UD-Q8 33G","Q8 27G","UD-Q6 24G","UD-Q5 19G","UD-Q4 17G","Q4 16G","Q3 13G","UD-IQ3 12G","UD-Q2 12G","UD-IQ2 11G","mmproj 1.8G"], status:"delete", why:"superseded by 3.8-27B", bench:null },
+  { org:"unsloth", model:"Qwen3-235B-A22B-GGUF",   gb:349, format:"GGUF", vars:["IQ4_XS 116G (3 shards)","Q8_0 233G (6 shards)"], status:"delete", why:"not in BenchLM, superseded", bench:null },
+  { org:"unsloth", model:"Qwen3.5-397B-A17B-GGUF", gb:256, format:"GGUF", vars:["UD-Q4_K_XL 228G (6 shards)"], status:"delete", why:"not in BenchLM, old gen", bench:null },
+  { org:"unsloth", model:"GLM-5-GGUF",             gb:237, format:"GGUF", vars:["UD-IQ2_M 237G (7 shards)"], status:"delete", why:"superseded by GLM-5.1/5.2", bench:32 },
+  { org:"HauhauCS", model:"Qwen3.5-35B-A3B-Uncensored", gb:227, format:"GGUF", vars:["BF16 65G","Q8 35G","Q6 27G","Q5 24G","Q4 20G","Q3 16G","IQ4 18G","IQ3 15G","IQ2 11G","mmproj 857M"], status:"delete", why:"uncensored wrapper, old Qwen3.5", bench:null },
+  { org:"unsloth", model:"MiniMax-M2.5-GGUF",       gb:129, format:"GGUF", vars:["Q4_K_M 129G (4 shards)"], status:"delete", why:"superseded by MiniMax M3", bench:null },
+  { org:"cyankiwi", model:"Qwen3.5-122B-A10B-AWQ-4bit", gb:75, format:"AWQ safetensors", vars:["15 shards ~5G each"], status:"delete", why:"AWQ outdated, not in BenchLM", bench:null },
+  { org:"cyankiwi", model:"Qwen3-Next-80B-A3B-AWQ", gb:46, format:"AWQ safetensors", vars:["10 shards ~5G each"], status:"delete", why:"AWQ outdated", bench:null },
+  { org:"cyankiwi", model:"GLM-4.7-Flash-AWQ-4bit", gb:18, format:"AWQ safetensors", vars:["4 shards"], status:"delete", why:"old GLM, AWQ", bench:null },
+  { org:"Qwen", model:"Qwen3.6-35B-A3B",           gb:67, format:"BF16 safetensors", vars:["26 shards 1-4G each"], status:"delete", why:"BF16 redundant if you have FP8+GGUF", bench:null },
+  { org:"Qwen", model:"Qwen3.6-27B",               gb:52, format:"BF16 safetensors", vars:["15 shards ~3.7G"], status:"delete", why:"superseded by 3.8, BF16 redundant", bench:null },
+  { org:"AlexWortega", model:"SIQ-1-35B",          gb:85, format:"safetensors+GGUF", vars:["safetensors 66G","Q4_K_M.gguf 20G"], status:"keep", why:"guardrail model, consider keeping Q4 only", bench:null },
+  { org:"Qwen", model:"Qwen3.6-35B-A3B-FP8",       gb:35, format:"FP8 safetensors", vars:["24 layers ~804M"], status:"keep", why:"FP8 for vLLM if testing Qwen3.6 MoE", bench:null },
+  { org:"Qwen", model:"Qwen3.6-27B-FP8",           gb:29, format:"FP8 safetensors", vars:["24 layers ~367M"], status:"keep", why:"CURRENT vLLM backend", bench:null },
+  { org:"Wan-AI", model:"Wan2.2-T2V-A14B",        gb:118, format:"diffusion pth", vars:["high_noise 54G","low_noise 54G","T5 11G","VAE 485M"], status:"delete", why:"video gen, not LLM", bench:null },
+  { org:"Wan-AI", model:"Wan2.2-I2V-A14B",        gb:118, format:"diffusion pth", vars:["high_noise 54G","low_noise 54G","T5 11G","VAE 485M"], status:"delete", why:"video gen, not LLM", bench:null },
+  { org:"Wan-AI", model:"Wan2.2-Animate-14B",     gb:68, format:"diffusion", vars:["safetensors 32G","T5 11G","clip 4.5G","relighting 5.4G"], status:"delete", why:"video gen", bench:null },
+  { org:"Wan-AI", model:"Wan2.2-S2V-14B",         gb:46, format:"diffusion", vars:["safetensors 30G","T5 11G","wav2vec2 4.4G"], status:"delete", why:"video gen", bench:null },
+  { org:"Wan-AI", model:"Wan2.2-TI2V-5B",         gb:32, format:"diffusion", vars:["safetensors 18G","T5 11G","VAE 2.7G"], status:"delete", why:"video gen", bench:null },
+  { org:"unsloth", model:"GLM-4.7-Flash-GGUF",     gb:18, format:"GGUF", vars:["Q4_K_M 18G"], status:"delete", why:"old GLM, replaced by 5.x", bench:null },
+  { org:"whisper", model:"ggml-medium.bin",         gb:1.5, format:"GGML", vars:["single file"], status:"keep", why:"whisper ASR, tiny", bench:null },
+];
+
+// ── CPU CANDIDATES (with real GGUF sizes) ──────
+const CPU = [
+  { name:"MiniMax M3",         bench:19, score:68.74, total:428, act:23, arch:"MoE", q3:195, q4:261, q8:500, mtp:false, vision:true, ctx:"1M", lic:"MiniMax Comm.", hf:"MiniMaxAI/MiniMax-M3", status:"dl", note:"#19, native multimodal, 1M ctx, 23B active = fast decode" },
+  { name:"Hy3",                bench:20, score:68.02, total:295, act:21, arch:"MoE", q3:130, q4:182, q8:318, mtp:true, vision:false, ctx:"256K", lic:"Apache-2.0", hf:"tencent/Hy3", status:"dl", note:"#20, Agent 61, Code 63, 256K, Apache. Q8 fits CPU!" },
+  { name:"Inkling-Small",      bench:33, score:65.54, total:276, act:12, arch:"MoE", q3:110, q4:155, q8:280, mtp:false, vision:true, ctx:"1M", lic:"Apache-2.0", hf:"thinkingmachines/Inkling-Small", status:"dl", note:"#33, IF 96.5, Math 77, 1M, 12B active" },
+  { name:"GLM-5.1",            bench:26, score:66.91, total:754, act:62, arch:"MoE", q3:372, q4:460, q8:801, mtp:false, vision:false, ctx:"128K", lic:"MIT", hf:"zai-org/GLM-5.1", status:"disk", note:"ON DISK, only Q3 fits, Know 77.6" },
+  { name:"GLM-5.2",            bench:44, score:63.34, total:744, act:40, arch:"MoE", q3:376, q4:466, q8:801, mtp:true, vision:false, ctx:"1M", lic:"MIT", hf:"zai-org/GLM-5.2", status:"dl", note:"1M ctx, MIT, Know 82.5, Math 81.4, only Q3 fits" },
+  { name:"GLM-5",              bench:32, score:65.61, total:744, act:40, arch:"MoE", q3:372, q4:460, q8:801, mtp:false, vision:false, ctx:"200K", lic:"MIT", hf:"zai-org/GLM-5", status:"disk", note:"ON DISK (IQ2 only), superseded" },
+  { name:"Qwen3.8-27B",        bench:"—", score:null, total:27, act:27, arch:"Dense", q3:12, q4:17, q8:34, mtp:true, vision:true, ctx:"262K", lic:"Apache-2.0", hf:"Qwen/Qwen3.8-27B", status:"dl", note:"#6 sibling, vision, SWE-bench 61.7, compact" },
+  { name:"Gemma 4 31B",        bench:"—", score:null, total:31, act:31, arch:"Dense", q3:14, q4:19, q8:38, mtp:true, vision:true, ctx:"262K", lic:"Apache-2.0", hf:"google/gemma-4-31B", status:"dl", note:"AIME 89.2%, speculative drafter, 140+ langs" },
+  { name:"Qwen3-235B-A22B",    bench:"—", score:null, total:235, act:22, arch:"MoE", q3:88, q4:116, q8:233, mtp:false, vision:false, ctx:"128K", lic:"Apache-2.0", hf:"unsloth/Qwen3-235B-A22B-GGUF", status:"disk", note:"ON DISK, IQ4+Q8. 22B active = fast" },
+  { name:"Qwen3.5-397B-A17B",  bench:"—", score:null, total:397, act:17, arch:"MoE", q3:150, q4:228, q8:480, mtp:false, vision:false, ctx:"128K", lic:"Apache-2.0", hf:"unsloth/Qwen3.5-397B-A17B-GGUF", status:"disk", note:"ON DISK, 17B active = fastest MoE here" },
+];
+
+// ── GPU CANDIDATES ─────────────────────────────
+const GPU = [
+  { name:"Qwen3.8-27B", fp8:14, arch:"Dense 27B", vision:true, mtp:true, license:"Apache-2.0", bench:"sibling #6", ctx:"262K→1M", hf:"Qwen/Qwen3.8-27B", status:"dl", note:"🆕 Aug 14. Top pick. SWE-bench Pro 61.7." },
+  { name:"Gemma 4 31B", fp8:16, arch:"Dense 31B", vision:true, mtp:true, license:"Apache-2.0", bench:"AIME 89.2%", ctx:"262K", hf:"google/gemma-4-31B", status:"dl", note:"Multilingual 140+, speculative drafter" },
+  { name:"Qwen3.6-27B-FP8", fp8:29, arch:"Dense 27B", vision:false, mtp:false, license:"Apache-2.0", bench:"—", ctx:"128K", hf:"Qwen/Qwen3.6-27B-FP8", status:"disk", note:"CURRENT backend. Replace with 3.8." },
+  { name:"Qwen3.6-35B-A3B-FP8", fp8:35, arch:"MoE 35B/3B", vision:false, mtp:false, license:"Apache-2.0", bench:"—", ctx:"128K", hf:"Qwen/Qwen3.6-35B-A3B-FP8", status:"disk", note:"3B active = very fast decode" },
+];
+
+// ── ESTIMATION ─────────────────────────────────
+function kv_gb(params_b, ctx_tok) {
+  return (params_b * 2 * (8/8) / 1024) * (ctx_tok / 4096);
+}
+function gpu_tps(m) {
+  const act = m.act || m.total;
+  const bytes = act * 1e9; // FP8 1B/param
+  return Math.round(H.gpu.bw * 1e9 * 0.85 / (2 * bytes));
+}
+function cpu_tps(m) {
+  const q4_bytes = m.total * 1e9 * 0.35;
+  return Math.round(H.cpu.bw * 1e9 * 0.7 / (2 * q4_bytes));
+}
+function mtp_speedup(acc) { return 1 + acc * (2/3); }
+const MTP = { "Qwen3.8-27B":0.75, "Qwen3.6-27B-FP8":0.75, "Gemma 4 31B":0.80, "Hy3":0.70, "GLM-5.2":0.65 };
+
+function sc(s) { if(!s) return 'var(--muted)'; if(s>=75) return 'var(--green)'; if(s>=65) return 'var(--blue)'; if(s>=55) return 'var(--yellow)'; return 'var(--muted)'; }
+function pct(v,mx) { return Math.min(100, Math.round(v/mx*100)); }
+
+// ── RENDER HW ──────────────────────────────────
+document.getElementById('hw-cards').innerHTML = [
+  { l:'GPU VRAM', v:96, u:'GB (83 GB usable for weights)' },
+  { l:'GPU BW', v:'1 800', u:'GB/s HBM3' },
+  { l:'CPU RAM', v:512, u:'GB DDR4 (404 GB usable)' },
+  { l:'CPU BW', v:200, u:'GB/s 8-channel DDR4' },
+].map(c => `<div class="stat-card"><div class="label">${c.l}</div><div class="value">${c.v}</div><div class="unit">${c.u}</div></div>`).join('');
+
+// ── GPU TABLE ──────────────────────────────────
+let gpu_h = '<table><thead><tr><th>Model</th><th>Arch</th><th>FP8</th><th>VRAM (128K ctx)</th><th>Fits</th><th>Est TPS</th><th>MTP</th><th>License</th><th>Status</th><th>Notes</th></tr></thead><tbody>';
+GPU.forEach(m => {
+  const kv = kv_gb(m.arch.includes('MoE') ? parseInt(m.arch.match(/\d+/)[0])*0.1 : parseInt(m.arch.match(/\d+/)[0]), 131072);
+  const tot = m.fp8 + kv + H.gpu_over;
+  const fits = tot <= 96;
+  const tps = gpu_tps({ total: parseInt(m.arch.match(/\d+/)[0]), act: parseInt(m.arch.includes('MoE') ? m.arch.match(/\/(\d+)/)[1] : m.arch.match(/\d+/)[0]) });
+  const acc = MTP[m.name] || 0.65;
+  const mtp = Math.round(tps * mtp_speedup(acc));
+  gpu_h += `<tr><td class="model-name"><a class="hf-link" href="https://huggingface.co/${m.hf}" target="_blank">${m.name}</a></td>`;
+  gpu_h += `<td><span class="tag ${m.arch.startsWith('Dense')?'b-dense':'b-moe'}">${m.arch}</span></td>`;
+  gpu_h += `<td>${m.fp8} GB</td>`;
+  gpu_h += `<td>${tot.toFixed(0)} / 96 GB</td>`;
+  gpu_h += `<td class="${fits?'ok':'bad'}">${fits?'✅':'❌'}</td>`;
+  gpu_h += `<td>${tps}</td>`;
+  gpu_h += `<td>~${mtp} (${acc*100|0}%)</td>`;
+  gpu_h += `<td>${m.license}</td>`;
+  gpu_h += `<td><span class="badge ${m.status==='dl'?'b-dl':'b-disk'}">${m.status==='dl'?'DOWNLOAD':'ON DISK'}</span></td>`;
+  gpu_h += `<td style="color:var(--muted)">${m.note}</td></tr>`;
+});
+gpu_h += '</tbody></table>';
+gpu_h += '<p class="note">KV cache: FP8, paged attention. Overhead: CUDA ctx + cudagraphs + torch.compile cache ~8 GB. 128K context tokens.</p>';
+document.getElementById('gpu-table').innerHTML = gpu_h;
+
+// ── CPU TABLE ──────────────────────────────────
+const usable = H.cpu.ram - H.cpu.os_res - H.cpu.over;
+let cpu_h = '<table><thead><tr><th>Model</th><th>Arch</th><th>Q3_K_M</th><th>Q4_K_M</th><th>Q8_0</th><th>Fits</th><th>Est TPS</th><th>Status</th><th>Notes</th></tr></thead><tbody>';
+CPU.sort((a,b) => (b.score||0) - (a.score||0)).forEach(m => {
+  const fq3 = m.q3 <= usable; const fq4 = m.q4 <= usable; const fq8 = m.q8 <= usable;
+  const tps = cpu_tps(m);
+  cpu_h += `<tr><td class="model-name"><a class="hf-link" href="https://huggingface.co/${m.hf}" target="_blank">${m.name}</a></td>`;
+  cpu_h += `<td><span class="tag ${m.arch==='Dense'?'b-dense':'b-moe'}">${m.arch}</span> ${m.total}B/${m.act}B</td>`;
+  cpu_h += `<td>${m.q3}G ${fq3?'✅':'❌'}</td>`;
+  cpu_h += `<td>${m.q4}G ${fq4?'✅':'❌'}</td>`;
+  cpu_h += `<td>${m.q8}G ${fq8?'✅':'❌'}</td>`;
+  cpu_h += `<td>${fq4?'✅ Q4':fq3?'⚠️ Q3':'❌'}</td>`;
+  cpu_h += `<td>${tps} tok/s</td>`;
+  cpu_h += `<td><span class="badge ${m.status==='dl'?'b-dl':'b-disk'}">${m.status==='dl'?'DOWNLOAD':'ON DISK'}</span></td>`;
+  cpu_h += `<td style="color:var(--muted)">${m.note}</td></tr>`;
+});
+cpu_h += '</tbody></table>';
+cpu_h += `<p class="note">Usable RAM: ${usable} GB. Q4_K_M ≈ 0.32 B/param (all experts stored for MoE). TPS = memory-bandwidth limited, EPYC 7702 8ch DDR4 ~200 GB/s × 0.7 BLAS efficiency. Context: 32K for KV overhead ~5 GB.</p>`;
+document.getElementById('cpu-table').innerHTML = cpu_h;
+
+// ── BENCHMARK TABLE ────────────────────────────
+const cat_names = { all:'All', ag:'Agent', cd:'Code', re:'Reason', mm:'Multimodal', kn:'Knowledge', if_:'Instr. Follow', ma:'Math' };
+let tab_h = '';
+Object.keys(cat_names).forEach(k => { tab_h += `<button class="tab-btn ${k==='all'?'active':''}" onclick="filterBw('${k}',this)">${cat_names[k]}</button>`; });
+document.getElementById('bw-tabs').innerHTML = tab_h;
+
+function renderBW(cat) {
+  let rows = Object.entries(B).filter(([n,b]) => {
+    if (cat==='all') return true;
+    return b[cat] !== null;
+  }).sort((a,b) => (typeof b[1].r==='number'?b[1].r:999) - (typeof a[1].r==='number'?a[1].r:999));
+  let h = '<table><thead><tr><th>#</th><th>Model</th><th>Score</th><th>Agent</th><th>Code</th><th>Reason</th><th>MM</th><th>Know</th><th>IF</th><th>Math</th><th>Arch</th><th>License</th></tr></thead><tbody>';
+  rows.forEach(([name, b]) => {
+    const ondisk = DISK.some(d => d.model.toLowerCase().includes(name.split(' ').slice(0,2).join('').toLowerCase()) && d.bench === b.r);
+    h += `<tr class="click-row" onclick="showBW('${name}')">`;
+    h += `<td>${b.r}</td>`;
+    h += `<td class="model-name">${name}${ondisk?' <span class="badge b-disk">DISK</span>':''}</td>`;
+    h += `<td style="color:${sc(b.s)}; font-weight:700">${b.s!=null?b.s.toFixed(1):'—'}</td>`;
+    ['ag','cd','re','mm','kn','if_','ma'].forEach(c => { h += `<td>${b[c]!=null?b[c].toFixed(0):'—'}</td>`; });
+    h += `<td><span class="tag tag-arch">${b.total} / ${b.act}</span></td>`;
+    h += `<td style="color:var(--muted)">${b.lic}</td></tr>`;
+  });
+  h += '</tbody></table>';
+  document.getElementById('bw-table').innerHTML = h;
+}
+renderBW('all');
+
+function filterBw(cat, btn) {
+  document.querySelectorAll('#bw-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBW(cat);
+}
+
+function showBW(name) {
+  const b = B[name]; if (!b) return;
+  let h = `<h3 style="margin-top:0">${name}</h3>`;
+  h += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">`;
+  h += `<div class="est-panel"><div class="est-row"><span class="est-l">BenchLM rank</span><span class="est-v">#${b.r}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Score</span><span class="est-v" style="color:${sc(b.s)}">${b.s!=null?b.s.toFixed(2):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Total / Active params</span><span class="est-v">${b.total} / ${b.act}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Architecture</span><span class="est-v">${b.arch}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Context window</span><span class="est-v">${(b.ctx/1024).toFixed(0)}K tokens</span></div>`;
+  h += `<div class="est-row"><span class="est-l">License</span><span class="est-v">${b.lic}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Vision</span><span class="est-v">${b.vision?'✅':'❌'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">MTP</span><span class="est-v">${b.mtp?'✅':'❌'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">FP8 size</span><span class="est-v">${b.fp8} GB</span></div></div>`;
+  h += `<div class="est-panel"><div class="est-row"><span class="est-l">Agent</span><span class="est-v">${b.ag!=null?b.ag.toFixed(1):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Code</span><span class="est-v">${b.cd!=null?b.cd.toFixed(1):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Reasoning</span><span class="est-v">${b.re!=null?b.re.toFixed(1):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Multimodal</span><span class="est-v">${b.mm!=null?b.mm.toFixed(1):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Knowledge</span><span class="est-v">${b.kn!=null?b.kn.toFixed(1):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Instruction</span><span class="est-v">${b.if_!=null?b.if_.toFixed(1):'—'}</span></div>`;
+  h += `<div class="est-row"><span class="est-l">Math</span><span class="est-v">${b.ma!=null?b.ma.toFixed(1):'—'}</span></div></div>`;
+  h += `</div>`;
+  h += `<p style="color:var(--muted); font-size:11px; margin-top:8px;">📦 <a class="hf-link" href="https://huggingface.co/${b.hf}" target="_blank">${b.hf}</a> · ${b.note}</p>`;
+  const d = document.getElementById('bw-detail');
+  d.innerHTML = h; d.classList.add('show');
+}
+
+// ── DISK TABLE ─────────────────────────────────
+const total_disk = DISK.reduce((s,d) => s + d.gb, 0);
+let dk_h = `<p class="note" style="margin-bottom:8px">Total: ${total_disk.toLocaleString()} GB across 23 model directories</p>`;
+dk_h += '<table><thead><tr><th>Model</th><th>Size</th><th>%</th><th>Format</th><th>BenchLM</th><th>Recommendation</th><th>Key variants</th></tr></thead><tbody>';
+DISK.sort((a,b) => b.gb - a.gb).forEach(d => {
+  const pct = (d.gb/total_disk*100).toFixed(1);
+  dk_h += `<tr><td class="model-name">${d.org}/${d.model}</td>`;
+  dk_h += `<td>${d.gb} GB</td><td>${pct}%</td>`;
+  dk_h += `<td style="color:var(--muted)">${d.format}</td>`;
+  dk_h += `<td>${d.bench?`#${d.bench}`:'<span style="color:var(--muted)">—</span>'}</td>`;
+  dk_h += `<td><span class="badge ${d.status==='delete'?'b-del':d.status==='partial'?'b-partial':'b-keep'}">${d.status}</span> ${d.why}</td>`;
+  dk_h += `<td style="color:var(--muted); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${d.vars.join(', ')}">${d.vars.slice(0,3).join(', ')}</td>`;
+  dk_h += `</tr>`;
+});
+dk_h += '</tbody></table>';
+document.getElementById('disk-table').innerHTML = dk_h;
+
+// ── CLEANUP TABLE ──────────────────────────────
+const del = DISK.filter(d => d.status==='delete'||d.status==='partial').sort((a,b) => b.gb - a.gb);
+const save = del.reduce((s,d) => s + (d.status==='partial' ? 200 : d.gb), 0);
+let cl_h = `<p class="ok" style="margin-bottom:8px">Estimated savings: ~${save.toLocaleString()} GB</p>`;
+cl_h += '<table><thead><tr><th>Model</th><th>Size</th><th>Action</th><th>Save</th><th>Why</th><th>Replace with</th></tr></thead><tbody>';
+const replaces = {
+  'Qwen3.6-35B-A3B-GGUF':'Qwen3.8-27B (dense, #6 sibling)',
+  'Qwen3.6-27B-GGUF':'Qwen3.8-27B',
+  'Qwen3-235B-A22B-GGUF':'MiniMax M3 (23B active, #19)',
+  'Qwen3.5-397B-A17B-GGUF':'MiniMax M3 / GLM-5.2',
+  'GLM-5-GGUF':'GLM-5.1 Q3_K_M (already on disk)',
+  'MiniMax-M2.5-GGUF':'MiniMax M3 Q4_K_M (261 GB)',
+  'HauhauCS':'n/a — no direct replacement',
+  'cyankiwi':'n/a — AWQ models, use GGUF instead',
+  'Wan-AI':'n/a — unless you need video generation',
+  'Qwen3.6-35B-A3B':'Qwen3.8-27B FP8 for vLLM',
+  'Qwen3.6-27B':'Qwen3.8-27B FP8',
+  'GLM-4.7-Flash':'GLM-5.1 or GLM-5.2',
+};
+del.forEach(d => {
+  const save_gb = d.status==='partial' ? 200 : d.gb;
+  const r_key = Object.keys(replaces).find(k => d.model.toLowerCase().includes(k.toLowerCase()) || d.org.toLowerCase().includes(k.toLowerCase()));
+  cl_h += `<tr><td class="model-name">${d.org}/${d.model}</td>`;
+  cl_h += `<td>${d.gb} GB</td>`;
+  cl_h += `<td><span class="badge ${d.status==='delete'?'b-del':'b-partial'}">${d.status.toUpperCase()}</span></td>`;
+  cl_h += `<td class="ok">+${save_gb} GB</td>`;
+  cl_h += `<td style="color:var(--muted)">${d.why}</td>`;
+  cl_h += `<td>${r_key ? replaces[r_key] : '—'}</td></tr>`;
+});
+cl_h += '</tbody></table>';
+document.getElementById('cleanup-table').innerHTML = cl_h;
+
+// ── ESTIMATION: GPU ────────────────────────────
+const gpu_examples = [
+  { n:'Qwen3.8-27B', p:27, fp8:14 },
+  { n:'Gemma 4 31B', p:31, fp8:16 },
+  { n:'Qwen3.6-27B-FP8', p:27, fp8:29 },
+];
+let ge_h = '';
+gpu_examples.forEach(e => {
+  const kv = kv_gb(e.p, 131072);
+  const tot = e.fp8 + kv + H.gpu_over;
+  const fits = tot <= 96;
+  const tps = gpu_tps({ total:e.p, act:e.p });
+  const acc = MTP[e.n] || 0.65;
+  const mtp = Math.round(tps * mtp_speedup(acc));
+  ge_h += `<div class="est-panel">
+    <div style="font-weight:600; margin-bottom:4px">${e.n}</div>
+    <div class="est-row"><span class="est-l">Weights FP8</span><span class="est-v">${e.fp8} GB</span></div>
+    <div class="est-row"><span class="est-l">KV cache (128K)</span><span class="est-v">${kv.toFixed(1)} GB</span></div>
+    <div class="est-row"><span class="est-l">Overhead</span><span class="est-v">${H.gpu_over} GB</span></div>
+    <div class="est-row"><span class="est-l">Total VRAM</span><span class="est-v ${fits?'ok':'bad'}">${tot.toFixed(0)} / 96 GB</span></div>
+    <div class="est-row"><span class="est-l">Decode TPS</span><span class="est-v">${tps}</span></div>
+    <div class="est-row"><span class="est-l">With MTP (acc ${acc})</span><span class="est-v ok">~${mtp}</span></div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:${pct(tot,96)}%; background:${fits?'var(--green)':'var(--red)'}"></div></div>
+  </div>`;
+});
+document.getElementById('gpu-est').innerHTML = ge_h;
+
+// ── ESTIMATION: CPU ────────────────────────────
+const cpu_examples = [
+  { n:'MiniMax M3', p:428, act:23, q4:261 },
+  { n:'Hy3', p:295, act:21, q4:196 },
+  { n:'GLM-5.1', p:754, act:62, q4:465 },
+  { n:'Qwen3.8-27B', p:27, act:27, q4:17 },
+];
+let ce_h = '';
+cpu_examples.forEach(e => {
+  const tps = Math.round(H.cpu.bw * 1e9 * 0.7 / (2 * e.q4 * 1e9));
+  const fits = e.q4 <= usable;
+  ce_h += `<div class="est-panel">
+    <div style="font-weight:600; margin-bottom:4px">${e.n} (${e.act}B active)</div>
+    <div class="est-row"><span class="est-l">Q4_K_M</span><span class="est-v ${fits?'ok':'bad'}">${e.q4} GB / ${usable} GB</span></div>
+    <div class="est-row"><span class="est-l">Est decode TPS</span><span class="est-v">${tps}</span></div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:${pct(e.q4,usable)}%; background:${fits?'var(--green)':'var(--red)'}"></div></div>
+  </div>`;
+});
+document.getElementById('cpu-est').innerHTML = ce_h;
+
+// ── MTP ────────────────────────────────────────
+let mt_h = '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">';
+Object.entries(MTP).forEach(([name, acc]) => {
+  const p = name.includes('27B') ? 27 : name.includes('31B') ? 31 : 31;
+  const raw = gpu_tps({ total:p, act:p });
+  const boosted = Math.round(raw * mtp_speedup(acc));
+  mt_h += `<div class="est-panel">
+    <div style="font-weight:600; margin-bottom:4px">${name}</div>
+    <div class="est-row"><span class="est-l">Acceptance</span><span class="est-v">${(acc*100).toFixed(0)}%</span></div>
+    <div class="est-row"><span class="est-l">Raw TPS</span><span class="est-v">${raw}</span></div>
+    <div class="est-row"><span class="est-l">MTP TPS</span><span class="est-v ok">~${boosted}</span></div>
+    <div class="est-row"><span class="est-l">Speedup</span><span class="est-v ok">${(boosted/raw).toFixed(2)}x</span></div>
+  </div>`;
+});
+mt_h += '</div>';
+mt_h += `<p class="note">MTP model: 2 speculative tokens. Speedup = 1 + acc × (2/3). Actual acceptance varies by prompt, KV pressure, and temperature. Data from live vLLM logs for Qwen3.6-27B. Other models estimated by architecture similarity.</p>`;
+document.getElementById('mtp-est').innerHTML = mt_h;
+</script>
+</body>
+</html>
