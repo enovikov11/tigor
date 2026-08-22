@@ -1,0 +1,10 @@
+__pycache__
+.DS_Store
+.venv
+.ipynb_checkpoints
+.env
+.secret*
+a.out
+build
+node_modules
+obj
